@@ -1,0 +1,35 @@
+# venv
+.venv/
+venv/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# 데이터셋 원본과 모델 가중치 — 용량이 크고 재다운로드 가능하다
+data/
+models/
+.cache/
+*.safetensors
+*.onnx
+*.bin
+
+# 인덱스와 임베딩 산출물 — 재생성 가능하다
+index/
+embeddings/
+*.npy
+*.faiss
+
+# results/ 는 커밋한다 (원본 측정값). 단 대용량 중간 산출물은 제외
+results/**/raw_dump_*.jsonl
+
+# 환경
+.env
+*.key
+
+# 내부 운영 문서 — 실제 경로와 형제 프로젝트 이름이 들어 있어 공개 저장소에 올리지 않는다
+CLAUDE.md
+prompt.txt
