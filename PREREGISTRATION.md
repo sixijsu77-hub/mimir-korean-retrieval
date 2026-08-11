@@ -155,4 +155,33 @@ this amendment — the repository contained no retrieval code at all, and
 
 ## Results
 
-*(left empty until measurements exist — filled in a separate commit)*
+### Harness validation gate — passed, 2026-08-12
+
+| Dataset | Tokenizer | Measured nDCG@10 | Published | Difference | Verdict |
+|---|---|---|---|---|---|
+| AutoRAGRetrieval (test) | character unigram | 0.64342 | 0.65022 | −0.00680 | pass |
+| Ko-StrategyQA (dev) | word | 0.37807 | 0.37808 | −0.00001 | pass |
+
+Both inside the ±0.02 pre-registered tolerance; neither exactly zero, so the
+suspicion check does not fire.
+
+The gate did not pass on the first attempt, and the reason became the week's
+finding: **the two published numbers were produced with different tokenizers.**
+`docs/baselines.md`, written before any measurement, predicted the word-level
+tokenizer for both. That was right for Ko-StrategyQA and wrong for
+AutoRAGRetrieval. The wrong prediction is left in place and annotated rather than
+edited away.
+
+The −0.00680 residual on AutoRAGRetrieval is **not explained**. Candidates not
+yet checked are listed in `docs/results-week1.md`.
+
+Full measurements, caveats and reproduction commands:
+[`docs/results-week1.md`](docs/results-week1.md).
+Raw records: `results/gate_bm25.jsonl`.
+
+### Hypotheses
+
+H1–H4 are not yet decided. Nothing dense has been measured in this harness, so no
+hypothesis is resolved by the gate. One observation bearing on H1 is recorded in
+`docs/results-week1.md` and is explicitly marked as a cross-harness comparison,
+not a test.

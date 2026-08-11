@@ -32,6 +32,14 @@ run is stamped `dataset_revision: fd7df84ac089bbec763b1c6bb1b56e985df5cc5c` and
 corpus (720 documents), it runs in seconds, its dataset revision is pinned and
 verified, and its published run used the most recent MTEB version of the five.
 
+> **Update, 2026-08-12 — one claim on this page turned out to be wrong.**
+> This document was written before any measurement and states that both published
+> numbers come from the word-level tokenizer. That holds for Ko-StrategyQA but
+> **not** for AutoRAGRetrieval, whose published number is reproduced by
+> **character unigrams** (0.64342 vs 0.65022), not by the word-level tokenizer
+> (0.79557). The measurement is in [`results-week1.md`](results-week1.md).
+> The original text below is left unedited; the error is part of the record.
+
 ## The configuration that produced those numbers
 
 This is the part that decides whether a reproduction attempt can succeed, and it
@@ -100,6 +108,14 @@ they differ only by an English stopword list and an English stemmer, both of
 which should be near-inert on Hangul. That "should" is a prediction, and it is
 cheap to settle: run both configurations and see which lands on 0.65022. That is
 part of the week-1 harness work.
+
+> **Settled, 2026-08-12.** Neither. Both candidate configurations give 0.79557,
+> identical to five decimals — so the English stopword/stemmer prediction was
+> correct (near-inert) but irrelevant. The published 0.65022 is reproduced by the
+> **character-unigram** path, which the table above places at MTEB 2.18.16 and
+> later. The `mteb_version: 2.12.30` recorded in the result file is therefore
+> inconsistent with the tokenizer that produced it; the `0_3_0` folder name is the
+> more reliable signal. See [`results-week1.md`](results-week1.md).
 
 ## Dense cross-check
 
@@ -175,6 +191,8 @@ Recorded so the absence is not mistaken for an oversight:
    `fd7df84a…`, split `test`, using bm25s with the word-level tokenizer, Lucene
    BM25, k1 = 1.5, b = 0.75, documents indexed as `title + "\n" + text`.
    Pass if the absolute difference is ≤ 0.02.
+   *(The word-level tokenizer named here was the wrong guess — see the update at
+   the top of this page. Everything else in this item held.)*
 2. If it differs, the pre-registered order of suspicion applies: tokenizer,
    then normalization, then index settings, then evaluation protocol. The two
    candidate stopword/stemmer configurations above are the first thing to test.

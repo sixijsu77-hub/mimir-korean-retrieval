@@ -1,24 +1,23 @@
-# MIMIR dependencies — installed in stages, not all at once.
-#
-# Stage 1 (this file, current): download the public datasets and measure them.
-# Nothing here runs a retrieval model; nothing here needs a GPU.
-#
-# Python 3.10.12. Versions are pinned so the measured counts in
-# docs/datasets.md can be reproduced exactly.
+# MIMIR dependencies, installed in stages rather than all at once.
+# Python 3.10.12. Versions are pinned so the numbers in docs/ reproduce exactly.
 
-# Dataset access. `datasets` is the documented way to load the MTEB-ko sets;
-# `huggingface_hub` is used directly to pin file revisions and to read repo
-# file sizes without downloading them.
+# --- Stage 1: dataset access and measurement --------------------------------
+# `datasets` is the documented way to load the MTEB-ko sets; `huggingface_hub`
+# is used directly to pin file revisions and read repo sizes without downloading.
 datasets==5.0.1
 huggingface-hub==1.27.0
-
-# Parquet reader for the AutoRAGRetrieval corpus/queries/qrels files.
 pyarrow==25.0.1
-
-# Numerics. Pinned now because the retrieval harness will build on it, and a
-# major-version change to numpy would silently alter score dtypes later.
 numpy==2.2.6
 
-# Stage 2 (next, not installed yet): torch with a bundled CUDA runtime (cu12x),
-# sentence-transformers, and bm25s. Held back deliberately — the dataset sizes
-# had to be measured first to decide which models are affordable to run.
+# --- Stage 2: BM25 retrieval ------------------------------------------------
+# bm25s is the same engine MTEB's published baseline uses, so a mismatch against
+# published numbers points at this harness rather than at the BM25 scoring.
+# PyStemmer supplies the English stemmer MTEB applies to Korean text.
+bm25s==0.3.10
+PyStemmer==3.1.0
+
+# --- Stage 3: dense retrieval (week 2) --------------------------------------
+# Not needed to reproduce any BM25 result in docs/results-week1.md — skip this
+# line if you only want the week-1 numbers. The PyPI Linux wheel bundles its own
+# CUDA runtime, so no CUDA toolkit install is required.
+torch==2.13.0
