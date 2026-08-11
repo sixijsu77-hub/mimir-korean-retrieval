@@ -179,9 +179,32 @@ Full measurements, caveats and reproduction commands:
 [`docs/results-week1.md`](docs/results-week1.md).
 Raw records: `results/gate_bm25.jsonl`.
 
-### Hypotheses
+### Hypotheses — decided 2026-08-12 for H1–H3
 
-H1–H4 are not yet decided. Nothing dense has been measured in this harness, so no
-hypothesis is resolved by the gate. One observation bearing on H1 is recorded in
-`docs/results-week1.md` and is explicitly marked as a cross-harness comparison,
-not a test.
+Measured on AutoRAGRetrieval and Ko-StrategyQA with `multilingual-e5-small` and
+`multilingual-e5-large`. Full tables, curves and caveats:
+[`docs/results-week2.md`](docs/results-week2.md). Raw records: `results/hybrid.jsonl`.
+
+| | Verdict | |
+|---|---|---|
+| H1 | **supported** | Character-bigram BM25 (0.92345) beats `multilingual-e5-small` (0.80068) on AutoRAGRetrieval with non-overlapping intervals. Dense wins decisively on Ko-StrategyQA, but the falsification condition required dense to win *everywhere*. |
+| H2 | **rejected** | Predicted optimum 0.2–0.4. On Ko-StrategyQA the optimum is at **0.90** for both models, and 0.2–0.4 is distinguishable from it. On AutoRAGRetrieval 19 of 21 weights are indistinguishable from the best, so the optimum cannot be located and is reported as **not distinguishable** rather than read off the point estimate. |
+| H3 | **rejected on one dataset, shape holds on the other** | AutoRAGRetrieval is flat within intervals, which is a pre-registered falsification condition. Ko-StrategyQA is single-peaked and declines after the peak — the predicted shape — but peaks at 0.90, not near 0.30. |
+| H4 | not measured | Hubness is week-3 work. |
+
+**H1 carries a caveat that weakens it.** It survives only on AutoRAGRetrieval, which
+is also where 36.8% of documents exceed the 512-token limit both dense models impose,
+and where the questions were generated against the documents. Both favour BM25.
+
+**The abandonment condition in section 6 is half met.** BM25 does not lose on every
+dataset, but the hybrid optimum sits well above 0.5 where it could be measured. The
+reading recorded in `docs/results-week2.md` is that the private measurement's weight
+finding is corpus-specific and does not generalize.
+
+### Second reproduction, on the dense side
+
+Not planned as a gate, but it happened: `multilingual-e5-large` reproduces KURE's
+published nDCG@10 exactly — 0.81337 on AutoRAGRetrieval and 0.80348 on Ko-StrategyQA,
+both to five decimals. The exactly-zero difference is addressed against the suspicion
+rule in `docs/results-week2.md`; MTEB was never installed here, and the metrics are
+independently implemented and hand-verified.

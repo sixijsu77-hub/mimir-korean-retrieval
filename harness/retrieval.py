@@ -7,6 +7,32 @@ tokenization, ranking, metrics) rather than at the BM25 implementation.
 
 from __future__ import annotations
 
+import numpy as np
+
+
+def bm25_score_matrix(
+    corpus_tokens: list[list[str]],
+    query_tokens: list[list[str]],
+    k1: float = 1.5,
+    b: float = 0.75,
+    method: str = "lucene",
+) -> np.ndarray:
+    """(n_queries, n_docs) BM25 scores over the whole corpus.
+
+    Hybrid fusion needs scores for every document, not just a truncated
+    candidate list, so that the weight curve carries no candidate-set artifact.
+    """
+    import bm25s
+
+    retriever = bm25s.BM25(k1=k1, b=b, method=method)
+    retriever.index(corpus_tokens, show_progress=False)
+
+    out = np.zeros((len(query_tokens), len(corpus_tokens)), dtype=np.float32)
+    for i, q in enumerate(query_tokens):
+        if q:
+            out[i] = retriever.get_scores(q)
+    return out
+
 
 def bm25_run(
     doc_ids: list[str],

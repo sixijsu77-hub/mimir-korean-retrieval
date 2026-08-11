@@ -56,6 +56,30 @@ def evaluate(
     return means, per_query
 
 
+def bootstrap_ci_values(
+    values: list[float],
+    n_resamples: int = 10000,
+    alpha: float = 0.05,
+    seed: int = 0,
+) -> tuple[float, float]:
+    """Vectorized equivalent of `bootstrap_ci`, for sweeps over many conditions.
+
+    Uses a different RNG stream, so intervals agree only to Monte Carlo error.
+    """
+    import numpy as np
+
+    arr = np.asarray(values, dtype=np.float64)
+    n = arr.shape[0]
+    if n == 0:
+        return (0.0, 0.0)
+    rng = np.random.default_rng(seed)
+    means = arr[rng.integers(0, n, size=(n_resamples, n))].mean(axis=1)
+    means.sort()
+    lo = means[int(n_resamples * alpha / 2)]
+    hi = means[min(int(n_resamples * (1 - alpha / 2)), n_resamples - 1)]
+    return (float(lo), float(hi))
+
+
 def bootstrap_ci(
     per_query: dict[str, dict[str, float]],
     metric: str,

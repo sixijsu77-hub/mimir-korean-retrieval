@@ -4,11 +4,29 @@ Reproducible measurements of BM25, dense embeddings, and hybrid retrieval on
 **public Korean benchmarks**, with confidence intervals and a pre-registered
 hypothesis set.
 
-> Status: **harness validation gate passed (2026-08-12).**
-> BM25 is measured on two public Korean datasets. Dense and hybrid retrieval are
-> not run yet, so no hypothesis about them is resolved.
+> Status: **BM25, dense and hybrid measured on two datasets (2026-08-12).**
+> H1–H3 decided. Hubness (H4) and MIRACL-ko not yet run.
 
-## First result: the published Korean BM25 baselines understate BM25
+## The pre-registered prediction failed
+
+The hybrid weight was predicted, before running anything, to peak at a dense
+weight of **0.2–0.4** and to decline above it. On the dataset where the question
+can be answered, it peaks at **0.90** and climbs nearly to pure dense retrieval:
+
+| Dense weight | 0.0 | 0.2 | 0.4 | 0.6 | 0.8 | 0.9 | 1.0 |
+|---|---|---|---|---|---|---|---|
+| Ko-StrategyQA / e5-large | 0.5611 | 0.6166 | 0.6796 | 0.7461 | 0.7914 | **0.8056** | 0.8035 |
+
+On AutoRAGRetrieval, 19 of 21 weights are statistically indistinguishable from the
+best, so the optimum **cannot be located** and is reported as such rather than read
+off a point estimate.
+
+The prediction came from a private measurement on Korean business documents. It does
+not generalize. That result is the point of the repository, not an embarrassment to
+it — see [`PREREGISTRATION.md`](PREREGISTRATION.md), whose commit predates every
+number here, and [`docs/results-week2.md`](docs/results-week2.md).
+
+## The published Korean BM25 baselines understate BM25
 
 MTEB's published BM25 baseline scores **0.65022** nDCG@10 on AutoRAGRetrieval and
 **0.37808** on Ko-StrategyQA. Both are reproduced here within the pre-registered
@@ -104,6 +122,11 @@ python -m harness.evaluate --dataset Ko-StrategyQA --tokenizer word \
 
 # Any other row in docs/results-week1.md: swap --tokenizer for
 # word | char_unigram | char_bigram
+
+# Dense and the hybrid weight sweep (needs the torch line; uses the GPU)
+python -m harness.sweep --dataset Ko-StrategyQA \
+    --model intfloat/multilingual-e5-large --tokenizer char_bigram \
+    --out results/hybrid.jsonl
 ```
 
 Reproducing the BM25 results does not require a GPU, and does not require the
