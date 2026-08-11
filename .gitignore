@@ -8,6 +8,8 @@ _local/
 notes/
 scratch/
 tmp/
+# Working plans are internal notes, not deliverables. Not published.
+docs/plans/
 *.local
 *.local.*
 *private*
