@@ -88,4 +88,4 @@ fine-tuning are separate, later experiments.
 
 ## License
 
-TBD
+[MIT](LICENSE). The datasets are not covered by it and keep their own licenses.

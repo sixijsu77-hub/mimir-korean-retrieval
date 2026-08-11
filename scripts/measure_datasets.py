@@ -1,20 +1,10 @@
 #!/usr/bin/env python3
-"""Measure the public Korean retrieval datasets before any retrieval is run.
+"""Measure corpus size, document length, and qrel counts for the Korean
+retrieval datasets. Produces results/dataset_inventory.jsonl.
 
-This is reconnaissance, not the evaluation harness. It answers one question:
-how big is each dataset, so we can decide what is affordable to index.
+Usage: python scripts/measure_datasets.py --out results/dataset_inventory.jsonl
 
-Every number reported in docs/datasets.md comes from this script. Run:
-
-    python scripts/measure_datasets.py --out results/dataset_inventory.jsonl
-
-Dataset revisions are pinned to the ones MTEB evaluates, so these counts
-describe exactly the data a reproduction would see.
-
-Document length is reported three ways: text only, the join the BM25 model
-indexes, and the join MTEB's published descriptive_stats use. The third one
-exists so these numbers can be checked against MTEB's own, character for
-character, rather than merely looking close.
+Rationale and the comparison against MTEB's published statistics: docs/datasets.md
 """
 
 from __future__ import annotations
@@ -31,18 +21,16 @@ from collections import Counter
 
 from huggingface_hub import hf_hub_download
 
-# Revisions pinned to what MTEB evaluates (mteb/tasks/retrieval/...).
+# Dataset revisions pinned to the ones MTEB evaluates.
 AUTORAG = ("yjoonjang/markers_bm", "fd7df84ac089bbec763b1c6bb1b56e985df5cc5c")
 KOSTRATEGY = ("taeminlee/Ko-StrategyQA", "d243889a3eb6654029dbd7e7f9319ae31d58f97c")
-# MTEB serves MIRACL from its own mirror (mteb/MIRACLRetrieval). We measure the
-# upstream source instead; docs/datasets.md records that the counts agree.
+# MTEB serves MIRACL from its own mirror; these are the upstream sources.
 MIRACL_CORPUS = "miracl/miracl-corpus"
 MIRACL_TOPICS = "miracl/miracl"
 
 
 def length_stats(values: list[int]) -> dict:
-    """Summary of a length distribution. Median and p90 matter more than the mean
-    here: retrieval corpora are long-tailed and the mean hides that."""
+    """Summary statistics for a length distribution."""
     if not values:
         return {}
     values = sorted(values)
@@ -69,13 +57,10 @@ def read_jsonl(path: str, gz: bool = False):
 
 
 def doc_lengths(docs) -> tuple[list[int], list[int], list[int], int]:
-    """Return (text-only, indexer-join, mteb-stats-join) char lengths and unique text count.
+    """Return (text-only, indexer-join, stats-join) char lengths and unique text count.
 
-    Two joins are reported because MTEB uses two different ones, and they differ
-    by one character whenever the title is non-empty:
-      - the BM25 model indexes "\\n".join([title, text])
-      - the published descriptive_stats use (title + " " + text).strip()
-    Reporting both is what lets our numbers be checked against theirs exactly.
+    MTEB uses two different title/text joins: the BM25 model indexes
+    "\\n".join([title, text]); descriptive_stats use (title + " " + text).strip().
     """
     text_lens, index_lens, stats_lens = [], [], []
     seen = set()
@@ -140,7 +125,7 @@ def measure_ko_strategyqa() -> dict:
     text_lens, index_lens, stats_lens, uniq = doc_lengths(corpus)
     positives = [r for r in qrels if float(r["score"]) > 0]
     per_query = Counter(r["query-id"] for r in positives)
-    # queries.jsonl holds train+dev; the eval split is dev, so scope to its qrels.
+    # queries.jsonl holds train+dev (2,833); the dev split has 592.
     dev_ids = set(per_query)
     dev_query_chars = [len(queries[q]["text"]) for q in dev_ids if q in queries]
 
@@ -188,8 +173,7 @@ def measure_miracl_ko() -> dict:
     topic_rows = list(csv.reader(open(topics, encoding="utf-8"), delimiter="\t"))
     qrel_rows = list(csv.reader(open(qrels_path, encoding="utf-8"), delimiter="\t"))
 
-    # MIRACL qrels list every *judged* document, relevant or not. Only rows with
-    # relevance 1 are positives; the rest are judged negatives and score 0 gain.
+    # MIRACL qrels list every judged document; only relevance 1 is a positive.
     positives = [r for r in qrel_rows if r[3] == "1"]
     per_query = Counter(r[0] for r in positives)
     judged_per_query = Counter(r[0] for r in qrel_rows)

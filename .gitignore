@@ -1,35 +1,103 @@
-# venv
+# This repository is public by design. Default to excluding anything that is
+# local, regenerable, or not a deliverable — it is far cheaper to add a file
+# later than to remove one from published history.
+
+# --- Local-only working area -------------------------------------------------
+# Anything internal goes here. `docs/` is for published deliverables only.
+_local/
+notes/
+scratch/
+tmp/
+*.local
+*.local.*
+*private*
+*internal*
+*secret*
+
+# --- Agent / editor / OS -----------------------------------------------------
+CLAUDE.md
+CLAUDE.local.md
+prompt.txt
+.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Credentials -------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+.netrc
+.git-credentials
+credentials*.json
+token*.json
+service-account*.json
+
+# --- Python ------------------------------------------------------------------
 .venv/
 venv/
-
-# python
 __pycache__/
 *.py[cod]
 *.egg-info/
+build/
+dist/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 .ipynb_checkpoints/
 
-# 데이터셋 원본과 모델 가중치 — 용량이 크고 재다운로드 가능하다
+# --- Datasets and model weights ----------------------------------------------
+# Large and re-downloadable. Revisions are pinned in code, so the exact bytes
+# are recoverable without committing them.
 data/
 models/
 .cache/
+hf_cache/
+.huggingface/
 *.safetensors
 *.onnx
 *.bin
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.gguf
+*.msgpack
 
-# 인덱스와 임베딩 산출물 — 재생성 가능하다
+# --- Derived indexes and embeddings ------------------------------------------
+# Regenerable from the pinned datasets plus committed code.
 index/
 embeddings/
 *.npy
+*.npz
 *.faiss
+*.mmap
 
-# results/ 는 커밋한다 (원본 측정값). 단 대용량 중간 산출물은 제외
+# --- Archives and logs -------------------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.jsonl.gz
+*.log
+wandb/
+runs/
+lightning_logs/
+
+# --- Results -----------------------------------------------------------------
+# results/*.jsonl IS committed — it is the raw measurement record and every
+# table and figure must be regenerable from it. Only bulk intermediates are
+# excluded here.
 results/**/raw_dump_*.jsonl
-
-# 환경
-.env
-*.key
-
-# 내부 운영 문서 — 실제 경로와 형제 프로젝트 이름이 들어 있어 공개 저장소에 올리지 않는다
-CLAUDE.md
-prompt.txt
+results/**/*_scores.npy
+results/**/checkpoints/
