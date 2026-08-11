@@ -1,0 +1,24 @@
+# MIMIR dependencies — installed in stages, not all at once.
+#
+# Stage 1 (this file, current): download the public datasets and measure them.
+# Nothing here runs a retrieval model; nothing here needs a GPU.
+#
+# Python 3.10.12. Versions are pinned so the measured counts in
+# docs/datasets.md can be reproduced exactly.
+
+# Dataset access. `datasets` is the documented way to load the MTEB-ko sets;
+# `huggingface_hub` is used directly to pin file revisions and to read repo
+# file sizes without downloading them.
+datasets==5.0.1
+huggingface-hub==1.27.0
+
+# Parquet reader for the AutoRAGRetrieval corpus/queries/qrels files.
+pyarrow==25.0.1
+
+# Numerics. Pinned now because the retrieval harness will build on it, and a
+# major-version change to numpy would silently alter score dtypes later.
+numpy==2.2.6
+
+# Stage 2 (next, not installed yet): torch with a bundled CUDA runtime (cu12x),
+# sentence-transformers, and bm25s. Held back deliberately — the dataset sizes
+# had to be measured first to decide which models are affordable to run.

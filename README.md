@@ -4,8 +4,10 @@ Reproducible measurements of BM25, dense embeddings, and hybrid retrieval on
 **public Korean benchmarks**, with confidence intervals and a pre-registered
 hypothesis set.
 
-> Status: **planning complete, measurement not yet run.**
-> Nothing in this README should be read as a result yet.
+> Status: **datasets measured, retrieval not yet run.**
+> No retrieval score in this repository is a MIMIR result yet. The only numbers
+> measured so far are dataset sizes; the only retrieval scores quoted are other
+> people's published ones.
 
 ## Why this exists
 
@@ -38,10 +40,31 @@ nDCG@10 (primary), Recall@10 / Recall@100, bootstrap CIs resampled at query leve
 
 ## Datasets
 
-Public Korean retrieval sets from the MTEB-ko ecosystem — AutoRAGRetrieval,
-Ko-StrategyQA, MIRACL-ko. See
-[KURE](https://github.com/nlpai-lab/KURE) and
-[Korean-MTEB-Retrieval-Evaluators](https://github.com/BM-K/Korean-MTEB-Retrieval-Evaluators).
+Public Korean retrieval sets from the MTEB-ko ecosystem, at the dataset
+revisions MTEB evaluates:
+
+| | Documents | Queries | Positives / query |
+|---|---|---|---|
+| AutoRAGRetrieval | 720 | 114 | 1.00 |
+| Ko-StrategyQA | 9,251 | 592 | 1.93 |
+| MIRACLRetrieval (ko) | 1,486,752 | 213 | 2.57 |
+
+Measured, not estimated — see [`docs/datasets.md`](docs/datasets.md) for the full
+inventory, the cross-check against MTEB's own published statistics, and the
+indexing-cost arithmetic. Raw values: [`results/dataset_inventory.jsonl`](results/dataset_inventory.jsonl).
+
+## Baselines to beat — or rather, to reproduce first
+
+[`docs/baselines.md`](docs/baselines.md) records the published numbers this
+harness is graded against, and the exact configuration that produced them. The
+week-1 gate is MTEB's official BM25 baseline on AutoRAGRetrieval,
+**nDCG@10 = 0.65022**.
+
+That page also documents something not stated on any leaderboard: the published
+Korean BM25 figures use a word-level tokenizer that discards every
+single-syllable Korean token, and current MTEB versions would tokenize Korean
+differently. Reproducing these numbers requires pinning the evaluation code
+version, not only the dataset.
 
 ## Reproducing
 
@@ -49,7 +72,10 @@ Ko-StrategyQA, MIRACL-ko. See
 python3 -m venv .venv && source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
-# (commands added as the harness lands)
+
+# Dataset inventory (~12 s cached; downloads 234 MB the first time)
+python scripts/measure_datasets.py --out results/dataset_inventory.jsonl
+# (retrieval commands added as the harness lands)
 ```
 
 Hardware used: RTX 4090 (24 GB), i9-13900K, Python 3.10.
