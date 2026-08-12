@@ -109,9 +109,106 @@ of two weak candidates.
 Regenerate with `python scripts/plot_weight_curves.py`. The shaded band is the
 pre-registered 0.2–0.4 prediction; the marked point is each curve's measured optimum.
 
-## H5 and MIRACL-ko
+## H5 — supported, including the mechanism it named
 
-*(This section is filled in when the MIRACL-ko run completes. Corpus statistics, the
-measured cost of running it, and the H5 prediction are already recorded — the prediction
-in `PREREGISTRATION.md` section 4b.3, committed before the corpus was retrieved from at
-all.)*
+H5 was registered before MIRACL-ko had been retrieved from at all: the hybrid optimum
+would sit at a dense weight of **≥ 0.5**, and `multilingual-e5-large` alone would beat
+character-bigram BM25 alone. Both hold.
+
+| | Measured | Predicted | |
+|---|---|---|---|
+| Best dense weight | **0.80** (min-max), 0.90 (z-score) | ≥ 0.5 | holds |
+| Dense alone | **0.66486** [0.6219, 0.7086] | > BM25 | holds |
+| BM25 char-bigram alone | 0.35067 [0.2975, 0.4058] | | intervals do not overlap |
+
+The paired Bonferroni test puts the indistinguishable set at 0.70–0.95 (min-max), so the
+0.2–0.4 band is excluded here too — the same verdict as Ko-StrategyQA, now on a corpus
+2,000× larger.
+
+H5 also named a *mechanism*, which matters more than the verdict: if document length and
+truncation are what separate the datasets, MIRACL-ko should behave like Ko-StrategyQA
+rather than like AutoRAGRetrieval. It does.
+
+| Dataset | Mean doc length | Over the 512-token limit | Best dense weight | Winner alone |
+|---|---|---|---|---|
+| AutoRAGRetrieval | 824 chars | **36.8%** | not locatable | BM25 |
+| Ko-StrategyQA | 320 chars | 1.5% | 0.90 | dense |
+| MIRACL-ko | 175 chars | not measured | 0.80 | dense |
+
+The one dataset where BM25 wins and the weight curve is flat is the one whose documents
+the encoders truncate. That was stated in advance as the reason, and the prediction
+derived from it came out right.
+
+## A third exact dense reproduction
+
+| Dataset | Measured | KURE published | Difference |
+|---|---|---|---|
+| AutoRAGRetrieval | 0.81337 | 0.81337 | 0.00000 |
+| Ko-StrategyQA | 0.80348 | 0.80348 | 0.00000 |
+| MIRACL-ko | **0.66486** | **0.66486** | **0.00000** |
+
+Five published numbers from two independent sources are now reproduced in this harness —
+two BM25, three dense — across corpora from 720 to 1,486,752 documents. The exactly-zero
+differences are addressed against the pre-registered suspicion rule in
+[`results-week2.md`](results-week2.md); MTEB was never installed here and the metrics are
+independently implemented.
+
+## Character bigrams beat the published baseline on every dataset
+
+| Dataset | Published MTEB BM25 | Character bigram | Gain |
+|---|---|---|---|
+| AutoRAGRetrieval | 0.65022 | 0.92345 | +0.273 |
+| Ko-StrategyQA | 0.37808 | 0.56108 | +0.183 |
+| MIRACL-ko | 0.24521 | 0.35067 | +0.105 |
+
+No BM25 parameter was tuned in any of these. The margin shrinks as the corpus grows, but
+it does not close.
+
+## Hubness on MIRACL-ko, and where the statistic stops working
+
+| Method | Skewness | Null p99 | Exceeds | Max | Documents ever retrieved |
+|---|---|---|---|---|---|
+| BM25 char-bigram | 181.43 | 26.55 | yes | 25 | 1,471 of 1,486,752 |
+| e5-large | 34.20 | 26.55 | yes | 4 | 1,662 of 1,486,752 |
+
+Same direction as the smaller datasets: both exceed the null, and BM25 far more so.
+
+**The magnitude statistics are degenerate at this scale and should not be read.** With
+213 queries there are only 2,130 top-10 slots for 1.49 million documents, so 99.9% of the
+corpus has a count of zero. The Gini coefficient is 0.999 for both methods and the "top
+1% share" is 1.000 for both — the top 1% is 14,867 documents, which already contains every
+document that was retrieved even once. Those columns are omitted above for that reason.
+The skewness-versus-null comparison survives, because the null is computed at the same
+corpus size and lands at 26.55 rather than the ~1.1–1.3 seen on the small sets.
+
+## Cost, measured
+
+| | |
+|---|---|
+| Corpus load | 8.7 s, 2.0 GB RSS |
+| Character-bigram tokenization | 34.8 s, 205,213,744 tokens |
+| BM25 index + full score matrix | 143 s |
+| Dense encoding, e5-large, 1,486,752 documents | **58 min** |
+| Peak RSS for the whole run | ~12 GB |
+
+Pooling the bigram strings was necessary: 258M separate two-character objects cost about
+20 GB, one shared object per distinct bigram costs about 2 GB. Token values are identical,
+and the week-1 and week-2 numbers were re-run to confirm they did not move.
+
+## Where this leaves the original claim
+
+Across three public datasets:
+
+- **BM25 with a good tokenizer is much stronger than the published baselines suggest**, on
+  every dataset, by 0.105 to 0.273 nDCG@10.
+- **A small multilingual dense model can lose to it** — but only on the corpus whose
+  documents that model truncates.
+- **The hybrid weight finding does not generalize.** It was predicted at 0.2–0.4 with
+  accuracy falling above that. Measured: 0.90, 0.90 and 0.80 on the three datasets where
+  an optimum can be located at all, with accuracy *rising* almost to pure dense.
+- **Hubness is real but is not a dense-specific pathology.** The sparse method has it
+  worse on all three datasets.
+
+The private measurement that started this looks corpus-specific: it was made on long
+internal documents, which is the regime where these results agree with it, and it does not
+describe Korean retrieval in general.
