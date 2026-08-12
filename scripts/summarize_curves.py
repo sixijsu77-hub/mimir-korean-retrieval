@@ -29,7 +29,8 @@ def main() -> int:
                 lo, hi = best["ci95"]
                 width = hi - lo
                 rows.append({
-                    "dataset": r["dataset"], "model": r["model"], "normalization": norm,
+                    "dataset": r["dataset"], "model": r["model"],
+                    "tokenizer": r.get("tokenizer"), "normalization": norm,
                     "n_queries": r["n_queries"],
                     "best_w": best["w_dense"],
                     "curve_min": round(min(ys), 5), "curve_max": round(max(ys), 5),

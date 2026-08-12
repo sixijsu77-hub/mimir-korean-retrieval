@@ -4,10 +4,11 @@ Reproducible measurements of BM25, dense embeddings, and hybrid retrieval on
 **public Korean benchmarks**, with confidence intervals and a pre-registered
 hypothesis set.
 
-> Status: **exp01–exp05 complete (2026-08-12).** BM25, dense and hybrid measured on three
-> Korean datasets, 720 to 1,486,752 documents. H1–H12 decided across retrieval, chunking,
-> reranking, morphological analysis and corpus size — three of them recorded as
-> undecidable because of how they were written, not repaired afterwards.
+> Status: **exp01–exp06 complete (2026-08-12).** BM25, dense and hybrid measured on three
+> Korean datasets, 720 to 1,486,752 documents. Every pre-registered hypothesis H1–H12 has
+> a recorded verdict, across retrieval, chunking, reranking, morphological analysis,
+> corpus size and length normalization — three of them undecidable because of how they
+> were written, recorded as such rather than repaired afterwards.
 
 ## The pre-registered prediction failed
 
@@ -156,6 +157,7 @@ tuned value.
 | [`docs/results-exp03-reranking.md`](docs/results-exp03-reranking.md) | Reranking, and how a weak reranker destroys a good ranking; H8 decided |
 | [`docs/results-exp04-morphology.md`](docs/results-exp04-morphology.md) | Character bigrams against Kiwi morphological analysis; H11 decided |
 | [`docs/results-exp05-corpus-size.md`](docs/results-exp05-corpus-size.md) | Corpus size swept over four orders of magnitude, both directions; H12 decided; BM25 against all 18 published dense models |
+| [`docs/results-exp06-sparse-side-and-length-norm.md`](docs/results-exp06-sparse-side-and-length-norm.md) | Does the weight conclusion depend on the sparse tokenizer, and does BM25's `b` cause hubness; H9–H10 decided |
 | [`docs/should-you-tune-the-weight.md`](docs/should-you-tune-the-weight.md) | The practitioner procedure the above adds up to |
 | [`docs/preregistration-checklist.md`](docs/preregistration-checklist.md) | The five checks that would have caught three undecidable hypotheses here |
 | [`docs/errata.md`](docs/errata.md) | What was published wrong, for how long, and what changed |
