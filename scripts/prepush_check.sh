@@ -14,16 +14,18 @@ fail() { printf '  FAIL  %s\n' "$1"; FAIL=1; }
 TRACKED=$(git ls-files)
 SELF="scripts/prepush_check.sh"
 SCAN=$(echo "$TRACKED" | grep -v "^${SELF}$" || true)
-MSGS=$(git log --all --format='%H %s%n%b' 2>/dev/null || true)
+# Scope: the commits this push would publish, not what the remote already has.
+MSGS=$(git log --format='%H %s%n%b' HEAD 2>/dev/null || true)
 DENYLIST="_local/denylist.txt"
 
 SECRET_RE='sk-[A-Za-z0-9]{20,}|hf_[A-Za-z0-9]{30,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{50,}|AKIA[0-9A-Z]{16}|BEGIN [A-Z ]*PRIVATE KEY|xox[baprs]-[A-Za-z0-9-]{10,}'
 PATH_RE='/home/[a-z0-9_-]+|/Users/[A-Za-z0-9_-]+|C:\\\\Users\\\\'
 NET_RE='\b(10\.[0-9]{1,3}|192\.168|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]{1,3}\.[0-9]{1,3}\b|\.internal\b|\.corp\b|\.lan\b'
 MAIL_RE='[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+SESSION_RE='claude\.ai/code/session|Claude-Session|Co-Authored-By'
 
 printf '=== Pre-push check: %s tracked files, %s commits ===\n\n' \
-  "$(echo "$TRACKED" | wc -l)" "$(git rev-list --all --count 2>/dev/null || echo 0)"
+  "$(echo "$TRACKED" | wc -l)" "$(git rev-list --count HEAD 2>/dev/null || echo 0)"
 
 printf '[1] Filenames\n'
 BAD=$(echo "$TRACKED" | grep -E '(^|/)(CLAUDE\.md|CLAUDE\.local\.md|prompt\.txt|\.env|\.netrc|\.git-credentials)$|\.(key|pem|p12|pfx)$|credentials.*\.json$' || true)
@@ -76,17 +78,21 @@ M=$(echo "$SCAN" | xargs -r grep -I -n -E "$MAIL_RE" 2>/dev/null \
 M2=$(echo "$MSGS" | grep -E "$MAIL_RE" | grep -v 'users\.noreply\.github\.com' || true)
 [ -n "$M$M2" ] && fail "$M$M2" || pass "clean"
 
+printf '\n[7b] Session and tool trailers\n'
+T=$(echo "$MSGS" | grep -E "$SESSION_RE" || true)
+[ -n "$T" ] && fail "$T" || pass "clean"
+
 printf '\n[8] Commit identity\n'
 CFG=$(git config user.email || echo "")
 case "$CFG" in
   *users.noreply.github.com) pass "$CFG" ;;
   *) fail "user.email=$CFG" ;;
 esac
-NR=$(git log --all --format='%ae%n%ce' | sort -u | grep -v 'users\.noreply\.github\.com' || true)
+NR=$(git log --format='%ae%n%ce' HEAD | sort -u | grep -v 'users\.noreply\.github\.com' || true)
 [ -n "$NR" ] && fail "$NR" || pass "history clean"
 
 printf '\n[9] Commit message length\n'
-LONG=$(git log --all --format='%H %s' | while read -r h s; do
+LONG=$(git log --format='%H %s' HEAD | while read -r h s; do
   n=$(git log -1 --format='%B' "$h" | grep -c . )
   [ "$n" -gt 12 ] && echo "$(echo "$h" | cut -c1-7) ${n} lines"
 done)
