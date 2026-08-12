@@ -290,6 +290,47 @@ If H8 holds, the practical reading is that the weight-tuning question this repos
 spent four weeks on matters much less once a reranker is in the pipeline — which would
 be a result against this repository's own subject matter, and is published as such.
 
+## 4e. Two open questions, registered before either was run
+
+Added 2026-08-12. Neither had been run at the time of this commit. Both close items the
+published results currently list as open.
+
+### 4e.1 H9 — does the weight conclusion depend on which sparse side is used?
+
+Every weight curve in this repository fuses **character-bigram** BM25 with a dense model.
+The conclusion "the optimum sits at 0.80–0.90" could be a property of that one sparse
+side rather than of Korean retrieval. This re-runs the sweep with the word-level and
+character-unigram tokenizers on the sparse side, changing nothing else.
+
+| ID | Prediction | How it is falsified |
+|---|---|---|
+| H9 | With a weaker sparse side the curve's **amplitude grows** — because `w = 0` gets worse while `w = 1` is unchanged — and the best weight does not move **downward**. Stated concretely: on each dataset where an optimum is locatable, amplitude(word) > amplitude(char-bigram), and best_w(word) ≥ best_w(char-bigram) | Amplitude does not grow, or the best weight moves down |
+
+The second clause has a ceiling: the bigram optimum is already 0.90 on Ko-StrategyQA and
+0.80 on MIRACL-ko, so it can only move a little. The amplitude clause carries the test.
+
+### 4e.2 H10 — is BM25's length normalization the cause of hubness?
+
+Week 3 found character-bigram BM25 far more hub-prone than dense, and could not explain
+it: document length correlates at +0.016 and query-generic-bigram share at +0.062.
+Both are observations. BM25's `b` parameter controls how much document length is
+normalized away (0 = none, 1 = full), so it can be **manipulated**.
+
+Everything else is held at the values used throughout: k1 = 1.5, Lucene variant,
+character bigrams, top-10, the same `N10_irr` statistic and uniform-random null from
+section 4b.2.
+
+| ID | Prediction | How it is falsified |
+|---|---|---|
+| H10 | Hubness falls as `b` rises. Concretely, on Ko-StrategyQA the skewness of `N10_irr` at **b = 1.0 is lower than at b = 0.75**, and skewness at b = 0.0 is the highest of the three | Skewness at b = 1.0 is not below b = 0.75 |
+
+Also reported, not part of the test: the same sweep on AutoRAGRetrieval and MIRACL-ko,
+and what `b` does to nDCG@10 — because a `b` that removes hubness while destroying
+accuracy is not a fix, and that trade-off should be visible rather than argued.
+
+If H10 is rejected, the cause remains unidentified and is reported as such. Two failed
+explanations and one failed manipulation is a more useful record than a plausible story.
+
 ## 5. Stopping rules
 
 - Any dataset whose corpus cannot be indexed within available time/disk is **reported as
@@ -313,6 +354,12 @@ result, and the private measurement is reinterpreted as corpus-specific.
 Amendments are only legitimate before results exist. Each entry records what
 changed and why, so a reader can check the ordering against `git log` rather
 than taking it on trust.
+
+**2026-08-12 — H9 (sparse-side dependence) and H10 (hubness mechanism) added.**
+Section 4e. Both target items the published results list as open: whether the weight
+conclusions depend on the one sparse tokenizer used throughout, and whether BM25's
+length normalization causes the hubness week 3 could not explain. Neither had been run
+at the time of this commit. Verdicts for H1–H8 are not touched.
 
 **2026-08-12 — exp02 (H7, chunking) and exp03 (H8, reranking) added.** Section 4d.
 Both close claims that earlier weeks left resting on correlation. Neither had been run
