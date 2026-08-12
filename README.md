@@ -84,6 +84,23 @@ before collecting more evaluation queries. On one of the three datasets here, no
 is distinguishable from any other — the correct output is "it does not matter", not a
 tuned value.
 
+## What is measured here
+
+| | |
+|---|---|
+| [`docs/datasets.md`](docs/datasets.md) | Corpus sizes, lengths and qrel counts, cross-checked against MTEB's own published statistics |
+| [`docs/baselines.md`](docs/baselines.md) | The published numbers this harness is graded against, and the configuration that produced them |
+| [`docs/results-week1.md`](docs/results-week1.md) | Harness gate — two published BM25 numbers reproduced; the tokenizer finding |
+| [`docs/results-week2.md`](docs/results-week2.md) | Dense and the hybrid weight sweep; H1–H3 decided |
+| [`docs/results-week3.md`](docs/results-week3.md) | Paired testing, hubness, MIRACL-ko; H4–H5 decided |
+| [`docs/results-week4.md`](docs/results-week4.md) | How many queries a weight needs; H6 decided |
+| [`docs/results-exp02-chunking.md`](docs/results-exp02-chunking.md) | Chunking as a manipulation of the truncation story; H7 decided |
+| [`docs/should-you-tune-the-weight.md`](docs/should-you-tune-the-weight.md) | The practitioner procedure the above adds up to |
+| [`docs/errata.md`](docs/errata.md) | What was published wrong, for how long, and what changed |
+
+Every hypothesis and its verdict is in [`PREREGISTRATION.md`](PREREGISTRATION.md);
+every number is in `results/*.jsonl`.
+
 ## Why this exists
 
 Hybrid retrieval is widely recommended, but the *weight* is usually guessed.
