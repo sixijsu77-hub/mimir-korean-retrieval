@@ -22,7 +22,7 @@ of **0.2–0.4** (shaded below) and to decline above it. It peaks at **0.90, 0.9
 | Dense weight | 0.0 | 0.2 | 0.4 | 0.6 | 0.8 | 0.9 | 1.0 |
 |---|---|---|---|---|---|---|---|
 | Ko-StrategyQA / e5-large | 0.5611 | 0.6166 | 0.6796 | 0.7461 | 0.7914 | **0.8056** | 0.8035 |
-| MIRACL-ko / e5-large | 0.3507 | 0.4127 | 0.4913 | 0.6027 | **0.7071** | 0.7014 | 0.6649 |
+| MIRACL-ko / e5-large | 0.3507 | 0.4129 | 0.5289 | 0.6572 | **0.7083** | 0.6942 | 0.6649 |
 
 On AutoRAGRetrieval no weight is distinguishable from any other — including w = 0,
 pure BM25 — so the optimum **cannot be located** and is reported as such rather than
