@@ -196,6 +196,50 @@ stopping rule applies: reported as not run, with the measured numbers, not silen
 dropped. Published comparisons available for it — BM25 0.24521, KURE
 `multilingual-e5-large` 0.66486 — are reproduction checks, not gates.
 
+## 4c. How many queries does a hybrid weight need? — registered before running
+
+Added 2026-08-12, **before this measurement was run**. Weeks 2 and 3 found that on
+AutoRAGRetrieval (114 queries) no weight could be distinguished from any other, while
+Ko-StrategyQA (592) and MIRACL-ko (213) could locate an optimum. The measurement that
+motivated this repository used **12** queries. This asks the question directly instead
+of leaving it as an aside.
+
+### Procedure
+
+Per-query nDCG@10 is computed once for all 21 weights on the full query set, then
+subsamples are drawn from those columns — so subsampling changes only which queries
+are scored, never how.
+
+- **Primary condition**: Ko-StrategyQA, `multilingual-e5-large`, character-bigram
+  sparse side, min-max normalization. Repeated on MIRACL-ko and AutoRAGRetrieval.
+- **Sizes**: n ∈ {12, 25, 50, 100, 200, 400, all}.
+- **Replicates**: 30 independent subsamples per size, drawn without replacement, seed 0.
+- **Per subsample**: the argmax weight, and a paired bootstrap of every other weight
+  against it (B = 10,000, α = 0.05, **uncorrected**) giving the set of weights that
+  cannot be distinguished from the best.
+
+Uncorrected is deliberate. Correction would enlarge the indistinguishable set and make
+"the optimum is not locatable" easier to conclude. The permissive test biases *against*
+the prediction below, so finding the optimum unlocatable under it is the stronger result.
+
+### Reported
+
+- Distribution of the argmax across replicates: median, interquartile range, full range.
+- Median size of the indistinguishable set, per n.
+- Smallest n at which the median indistinguishable set falls below one third of the 21
+  weights. Descriptive; no threshold is attached to it in advance.
+
+### H6
+
+| ID | Prediction | How it is falsified |
+|---|---|---|
+| H6 | At n = 12 the optimum is not locatable: the interquartile range of the argmax across replicates is **≥ 0.30**, and the median indistinguishable set covers **≥ 90%** of the 21 weights | IQR below 0.30, or the median indistinguishable set below 90% |
+
+If H6 holds, the reading is that a 12-query evaluation cannot support any statement
+about where a hybrid weight should sit — including the one this repository was built
+to test. That would explain the original finding without rescuing it, and it is a
+result about evaluation design rather than about Korean retrieval.
+
 ## 5. Stopping rules
 
 - Any dataset whose corpus cannot be indexed within available time/disk is **reported as
@@ -219,6 +263,11 @@ result, and the private measurement is reinterpreted as corpus-specific.
 Amendments are only legitimate before results exist. Each entry records what
 changed and why, so a reader can check the ordering against `git log` rather
 than taking it on trust.
+
+**2026-08-12 (week 4) — H6 added, before the measurement it governs.** Section 4c.
+Asks how many queries are needed before a hybrid weight optimum can be located at all.
+No subsampling had been run at the time of this commit. Verdicts for H1–H5 are not
+touched.
 
 **2026-08-12 (week 3) — paired test, hubness threshold, and H5 added.** Section 4b in
 full. Three things are being fixed *before* the measurements they govern: the paired
