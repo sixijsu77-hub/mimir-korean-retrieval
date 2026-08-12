@@ -179,9 +179,9 @@ Wikipedia-derived and contains English titles for the stemmer to act on.
 ## Reproducing
 
 ```bash
-pip install -r requirements.txt
+pip install huggingface-hub pyarrow numpy bm25s PyStemmer
 python -m harness.evaluate --dataset AutoRAGRetrieval --tokenizer char_unigram \
-    --out results/gate_bm25.jsonl
+    --freq-threshold 0.9 --out results/gate_bm25.jsonl
 python -m harness.evaluate --dataset Ko-StrategyQA --tokenizer word \
     --stopwords en --stemmer english --out results/gate_bm25.jsonl
 ```

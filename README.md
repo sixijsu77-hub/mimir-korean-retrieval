@@ -226,28 +226,32 @@ published numbers reproduced here come from different sides of that change.
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -U pip
-pip install -r requirements.txt
+
+# BM25 results need only these five; `requirements.txt` additionally carries
+# Kiwi (exp04) and the dense stage (torch, ~2 GB).
+pip install huggingface-hub pyarrow numpy bm25s PyStemmer
 
 # Dataset inventory (~12 s cached; downloads 234 MB the first time)
 python scripts/measure_datasets.py --out results/dataset_inventory.jsonl
 
 # Harness validation gate — reproduces the two published BM25 numbers
 python -m harness.evaluate --dataset AutoRAGRetrieval --tokenizer char_unigram \
-    --out results/gate_bm25.jsonl
+    --freq-threshold 0.9 --out results/gate_bm25.jsonl
 python -m harness.evaluate --dataset Ko-StrategyQA --tokenizer word \
     --stopwords en --stemmer english --out results/gate_bm25.jsonl
 
 # Any other row in docs/results-week1.md: swap --tokenizer for
 # word | char_unigram | char_bigram
 
-# Dense and the hybrid weight sweep (needs the torch line; uses the GPU)
+# Dense and the hybrid weight sweep (needs `pip install -r requirements.txt`; uses the GPU)
 python -m harness.sweep --dataset Ko-StrategyQA \
     --model intfloat/multilingual-e5-large --tokenizer char_bigram \
     --out results/hybrid.jsonl
 ```
 
-Reproducing the BM25 results does not require a GPU, and does not require the
-`torch` line in `requirements.txt`.
+Reproducing the BM25 results needs no GPU and no `torch`. Verified from an empty
+directory: fresh clone, fresh venv, the five-package install above, then the gate
+commands — 271 MB of virtualenv and about 7 seconds for the first result.
 
 Hardware used: RTX 4090 (24 GB), i9-13900K, Python 3.10.
 BM25 indexing runs on CPU; embedding runs on GPU. No paid API is used.
