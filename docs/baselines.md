@@ -36,9 +36,15 @@ verified, and its published run used the most recent MTEB version of the five.
 > This document was written before any measurement and states that both published
 > numbers come from the word-level tokenizer. That holds for Ko-StrategyQA but
 > **not** for AutoRAGRetrieval, whose published number is reproduced by
-> **character unigrams** (0.64342 vs 0.65022), not by the word-level tokenizer
-> (0.79557). The measurement is in [`results-week1.md`](results-week1.md).
+> **character unigrams plus a frequency-stopword step** (0.65022, exactly), not by the
+> word-level tokenizer (0.79557). The measurement is in
+> [`results-week1.md`](results-week1.md).
 > The original text below is left unedited; the error is part of the record.
+>
+> **Second update, same day.** Character unigrams alone give 0.64342. MTEB additionally
+> removes tokens present in ≥ 90% of documents whenever no named stopword list applies to
+> the language, Korean included, and that step appears in no published result file.
+> Applying it makes the difference 0.00000.
 
 ## The configuration that produced those numbers
 

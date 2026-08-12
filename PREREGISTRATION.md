@@ -371,6 +371,60 @@ Also reported: the same comparison on `MIRACLReranking` ko, index size, and toke
 time — a tokenizer that wins on accuracy but costs an order of magnitude more to run is a
 different recommendation than one that does not.
 
+## 4g. H12 — is corpus size why BM25 beats a tuned dense model on AutoRAGRetrieval?
+
+Added 2026-08-12, before this was run. Character-bigram BM25 scores **0.92345** on
+`AutoRAGRetrieval` while `multilingual-e5-large` scores **0.81337**. A sparse method with
+no trained weights beating a Korean-tuned embedding model by 0.11 is a large claim, and
+this repository should try to break it before publishing it.
+
+**One explanation was already tested and rejected, before this section was written.** If
+the queries had been generated from the passages that answer them, lexical overlap would
+be inflated and bigrams would exploit it maximally. Measured as the fraction of query
+character bigrams present in the relevant document, minus the same against a random
+non-relevant document:
+
+| Dataset | query→gold | random null | lift |
+|---|---|---|---|
+| AutoRAGRetrieval | 0.497 | 0.076 | +0.420 |
+| Ko-StrategyQA | 0.261 | 0.028 | +0.234 |
+| MIRACL-ko | 0.453 | 0.011 | **+0.443** |
+
+MIRACL-ko has the **highest** overlap and is where BM25 does **worst**. The explanation is
+dropped. This was a diagnostic run before being registered, so it is recorded here as
+context rather than counted as a registered prediction.
+
+The remaining candidate is corpus size: 720 documents versus 9,251 versus 1,486,752.
+
+### Design
+
+Queries and their judged documents are held fixed; only the number of **distractor**
+documents changes. Retrievers: character-bigram BM25 and `multilingual-e5-large`, the pair
+whose ordering flips between datasets. 5 sampling seeds per size.
+
+| Direction | Corpus sizes |
+|---|---|
+| Thin MIRACL-ko | 720 · 7,200 · 72,000 · 720,000 · 1,486,752 (full) |
+| Thin Ko-StrategyQA | 720 · 2,400 · 9,251 (full) |
+| Pad AutoRAGRetrieval with MIRACL-ko documents | 720 (full) · 7,200 · 72,000 |
+
+**The padding direction is confounded and is labelled as such.** MIRACL-ko is Korean
+Wikipedia; AutoRAGRetrieval is finance, law, public administration and e-commerce. Its
+distractors are therefore out-of-domain and easier than in-domain ones would be, so this
+direction gives a **lower bound** on the effect. If it still breaks BM25's lead the effect
+is real; if it does not, that is inconclusive, not a refutation. The thinning directions
+draw distractors from the same distribution as the originals and carry no such confound.
+
+| ID | Prediction | Falsified by |
+|---|---|---|
+| H12a | On both thinning directions, each retriever's nDCG@10 falls at every 10× increase in corpus size | Some 10× step where a retriever does not fall |
+| H12b | On MIRACL-ko thinned to 720 documents, character-bigram BM25 is **not distinguishably worse** than dense — the paired interval includes 0 or favours BM25 — against −0.314 at full size | At 720 documents the paired interval still excludes 0 favouring dense |
+| H12c | Padding AutoRAGRetrieval to 72,000 documents makes the BM25 − dense difference **negative** | The difference is zero or positive at 72,000 |
+
+**Each falsification clause is the exact complement of its prediction.** H8 and H11b were
+written so that both clauses could fail at once, which left them undecidable; that is
+recorded in the results rather than repaired after the fact, and not repeated here.
+
 ## 5. Stopping rules
 
 - Any dataset whose corpus cannot be indexed within available time/disk is **reported as
@@ -394,6 +448,19 @@ result, and the private measurement is reinterpreted as corpus-specific.
 Amendments are only legitimate before results exist. Each entry records what
 changed and why, so a reader can check the ordering against `git log` rather
 than taking it on trust.
+
+**2026-08-12 — H12 (corpus size) added, before it was run.** Section 4g. Tests whether
+AutoRAGRetrieval's 720-document corpus is why sparse retrieval outscores a tuned dense
+model there. Registered with each falsification clause as the exact complement of its
+prediction, which H8 and H11b were not. Verdicts for H1–H11 are not touched.
+
+**2026-08-12 — the gate harness gained MTEB's frequency-stopword step.** Section 4.
+MTEB removes tokens present in ≥ 90% of documents whenever no named stopword list
+applies, which includes Korean, and the step appears in no published result file. Without
+it `AutoRAGRetrieval` reproduced at 0.64342 against a published 0.65022; with it the
+difference is 0.00000. This corrects the harness rather than a hypothesis — the gate
+target and tolerance are unchanged, and no prediction was altered. The superseded figure
+is kept in `docs/errata.md`.
 
 **2026-08-12 — H11 (morphological analysis) added, before it was run.** Section 4f.
 Every sparse-side claim so far compares character bigrams against what MTEB uses, not
@@ -442,11 +509,13 @@ this amendment — the repository contained no retrieval code at all, and
 
 | Dataset | Tokenizer | Measured nDCG@10 | Published | Difference | Verdict |
 |---|---|---|---|---|---|
-| AutoRAGRetrieval (test) | character unigram | 0.64342 | 0.65022 | −0.00680 | pass |
+| AutoRAGRetrieval (test) | character unigram + freq-stopwords | 0.65022 | 0.65022 | 0.00000 | pass |
 | Ko-StrategyQA (dev) | word | 0.37807 | 0.37808 | −0.00001 | pass |
 
-Both inside the ±0.02 pre-registered tolerance; neither exactly zero, so the
-suspicion check does not fire.
+Both inside the ±0.02 pre-registered tolerance. AutoRAGRetrieval is exactly zero, so
+the suspicion check fires and is addressed in `docs/results-week1.md`: the match appears
+only after replicating MTEB's frequency-stopword step, and removing that step reopens the
+gap to −0.00680.
 
 The gate did not pass on the first attempt, and the reason became the week's
 finding: **the two published numbers were produced with different tokenizers.**
@@ -455,8 +524,9 @@ tokenizer for both. That was right for Ko-StrategyQA and wrong for
 AutoRAGRetrieval. The wrong prediction is left in place and annotated rather than
 edited away.
 
-The −0.00680 residual on AutoRAGRetrieval is **not explained**. Candidates not
-yet checked are listed in `docs/results-week1.md`.
+The −0.00680 residual on AutoRAGRetrieval was reported as unexplained and is now
+explained: MTEB's frequency-stopword step, which none of the three candidates listed at
+the time named. The `bm25s` version candidate was checked and ruled out.
 
 Full measurements, caveats and reproduction commands:
 [`docs/results-week1.md`](docs/results-week1.md).

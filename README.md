@@ -42,7 +42,7 @@ its own — a gate fixed in advance at ±0.02 nDCG@10.
 
 | Source | Model | Dataset | Published | Measured |
 |---|---|---|---|---|
-| MTEB | `baseline-bm25s` | AutoRAGRetrieval | 0.65022 | 0.64342 |
+| MTEB | `baseline-bm25s` | AutoRAGRetrieval | 0.65022 | **0.65022** |
 | MTEB | `baseline-bm25s` | Ko-StrategyQA | 0.37808 | 0.37807 |
 | KURE | `multilingual-e5-large` | AutoRAGRetrieval | 0.81337 | **0.81337** |
 | KURE | `multilingual-e5-large` | Ko-StrategyQA | 0.80348 | **0.80348** |

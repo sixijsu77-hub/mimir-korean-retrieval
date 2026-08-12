@@ -40,6 +40,9 @@ def main() -> int:
                     help="'en' or 'none'. Applies to the word tokenizer only.")
     ap.add_argument("--stemmer", default="none",
                     help="'english' or 'none'. Applies to the word tokenizer only.")
+    ap.add_argument("--freq-threshold", type=float, default=0.0,
+                    help="drop tokens present in >= this fraction of documents. "
+                         "MTEB uses 0.9 when no named stopword list applies.")
     ap.add_argument("--k", type=int, default=1000, help="documents retrieved per query")
     ap.add_argument("--bootstrap", type=int, default=10000)
     ap.add_argument("--seed", type=int, default=0)
@@ -63,6 +66,9 @@ def main() -> int:
     t1 = time.time()
     corpus_tokens = tokenizers.tokenize(args.tokenizer, doc_texts, **tok_kwargs)
     query_tokens = tokenizers.tokenize(args.tokenizer, query_texts, **tok_kwargs)
+    freq_stops = tokenizers.freq_stopwords(corpus_tokens, args.freq_threshold)
+    corpus_tokens = tokenizers.drop(corpus_tokens, freq_stops)
+    query_tokens = tokenizers.drop(query_tokens, freq_stops)
     t_tok = time.time() - t1
 
     t2 = time.time()
@@ -79,6 +85,8 @@ def main() -> int:
         "tokenizer": args.tokenizer,
         "stopwords": args.stopwords,
         "stemmer": args.stemmer,
+        "freq_threshold": args.freq_threshold,
+        "freq_stopwords": sorted(freq_stops),
         "k": args.k,
         "bm25": {"k1": 1.5, "b": 0.75, "method": "lucene"},
         "n_documents": len(doc_ids),
@@ -113,7 +121,10 @@ def main() -> int:
 
     g = record.get("gate")
     print(f"{args.dataset} | {args.tokenizer} | stopwords={args.stopwords} "
-          f"stemmer={args.stemmer}", file=sys.stderr)
+          f"stemmer={args.stemmer} freq_threshold={args.freq_threshold}", file=sys.stderr)
+    if freq_stops:
+        print(f"  freq-stopwords removed {len(freq_stops)}: "
+              f"{' '.join(sorted(freq_stops))!r}", file=sys.stderr)
     print(f"  docs={len(doc_ids):,} queries={len(query_ids):,} vocab={len(vocab):,} "
           f"mean_doc_tokens={record['mean_corpus_tokens']}", file=sys.stderr)
     print(f"  nDCG@10={means['ndcg_at_10']:.5f} [{lo:.5f}, {hi:.5f}]  "

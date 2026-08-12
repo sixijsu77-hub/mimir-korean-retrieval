@@ -11,15 +11,19 @@ AutoRAGRetrieval **and** Ko-StrategyQA, within 0.02 on both.
 
 | Dataset | Tokenizer | Measured | Published | Difference | Tolerance | |
 |---|---|---|---|---|---|---|
-| AutoRAGRetrieval (test) | character unigram | 0.64342 | 0.65022 | **−0.00680** | ±0.02 | pass |
+| AutoRAGRetrieval (test) | character unigram + freq-stopwords | 0.65022 | 0.65022 | **0.00000** | ±0.02 | pass |
 | Ko-StrategyQA (dev) | word | 0.37807 | 0.37808 | **−0.00001** | ±0.02 | pass |
 
-Neither difference is exactly zero, so the pre-registered "treat 0.000 as suspicious"
-check does not fire. The Ko-StrategyQA match is exact at the precision the published
-value is reported to. That is not a shared code path: the metrics, the data loading and
-the ranking assembly here are written from scratch, and only the BM25 scoring engine
-(`bm25s`) is deliberately shared with MTEB so that a mismatch would point at this
-harness rather than at BM25.
+The AutoRAGRetrieval difference is exactly zero, so the pre-registered "treat 0.000 as
+suspicious" check fires. It is addressed rather than waved past: the match appears only
+after replicating a step MTEB applies and no result file records — removing tokens present
+in ≥ 90% of documents, which it does for any language with no named stopword list. Without
+that step the same harness gives 0.64342. Seven characters are removed here (newline,
+space, `.`, `1`, `2`, `가`, `기`, `이`), and adding them back reopens the gap. That is a
+configuration match, not a shared code path: the metrics, the data loading and the ranking
+assembly are written from scratch, and only the BM25 scoring engine (`bm25s`) is
+deliberately shared with MTEB so that a mismatch would point at this harness rather than
+at BM25.
 
 Metric implementations were checked against hand-computed values before the gate ran
 (with one positive per query, nDCG@10 must equal 1/log₂(rank+1); this and five other
@@ -42,10 +46,12 @@ Following the pre-registered order of suspicion (tokenizer first), the full grid
 |---|---|---|---|
 | AutoRAGRetrieval | character bigram | 0.92345 | +0.27323 |
 | AutoRAGRetrieval | word | 0.79557 | +0.14535 |
-| AutoRAGRetrieval | **character unigram** | **0.64342** | **−0.00680** |
+| AutoRAGRetrieval | character unigram | 0.64342 | −0.00680 |
+| AutoRAGRetrieval | **character unigram + freq-stopwords** | **0.65022** | **0.00000** |
 | Ko-StrategyQA | character bigram | 0.56108 | +0.18300 |
 | Ko-StrategyQA | **word** | **0.37807** | **−0.00001** |
 | Ko-StrategyQA | character unigram | 0.30430 | −0.07378 |
+| Ko-StrategyQA | character unigram + freq-stopwords | 0.30136 | −0.07672 |
 
 **The two published numbers were produced with different tokenizers.** Ko-StrategyQA's
 came from the word-level tokenizer; AutoRAGRetrieval's came from character unigrams.
@@ -83,14 +89,36 @@ evidence. Three things make it more than curve-fitting:
   directly: **0 mismatches across all 720 documents and 114 queries.** The tokenizer is
   not approximately right, it is identical.
 
-### The −0.00680 residual on AutoRAGRetrieval is not explained
+### The −0.00680 residual on AutoRAGRetrieval — found, and it was not on the candidate list
 
-It is inside tolerance, and it is not zero. On 114 queries with one positive each, 0.0068
-corresponds to roughly two queries differing by a single rank position. **Cause not
-established.** Candidates that have *not* been checked: the `bm25s` version (0.3.10 here;
-the result folder name suggests 0.3.0), how MTEB combines any task-level prompt into
-query text, and tie-breaking between equal scores. These are listed as open, not as
-explanations.
+This section previously reported the residual as unexplained and named three candidates:
+the `bm25s` version, task-level prompt handling, and tie-breaking. **The cause was none of
+them.**
+
+MTEB's BM25 tokenizer removes every token present in ≥ `freq_threshold` of the corpus
+(default 0.9) whenever no named stopword list applies to the language. Korean has no such
+list, so the step runs, and **no published result file records it**. Applying it closes the
+residual exactly:
+
+| Configuration | nDCG@10 | vs published 0.65022 |
+|---|---|---|
+| character unigram | 0.64342 | −0.00680 |
+| character unigram, freq-stopwords at 0.9 | **0.65022** | **0.00000** |
+
+Seven characters are dropped from the 720-document corpus and from the queries: newline,
+space, `.`, `1`, `2`, `가`, `기`, `이`.
+
+The `bm25s` version candidate was checked separately and ruled out — installing 0.3.0, the
+version the result folder names, and re-running the word-level configuration gives 0.79557,
+identical to 0.3.10. Prompt handling and tie-breaking were not reached, since the residual
+is fully accounted for without them.
+
+**This interacts badly with the character-level path.** Removing a frequent *word* in
+English discards a function word. Removing a frequent *character* in Korean discards that
+syllable from every word containing it — `이`, `가` and `기` are particles but also
+syllables inside ordinary content words. On Ko-StrategyQA nine characters go
+(`\n`, space, `.`, `는`, `니`, `다`, `로`, `에`, `의`, `이`) and the score falls from
+0.30430 to 0.30136.
 
 ## Published Korean BM25 baselines understate BM25
 
@@ -102,17 +130,19 @@ the tokenizer behind each published baseline, on both datasets, with non-overlap
 
 | Tokenizer | nDCG@10 | 95% CI | Recall@10 | Recall@100 | Vocabulary | Tokens/doc |
 |---|---|---|---|---|---|---|
-| character bigram | **0.92345** | [0.8848, 0.9572] | 0.9825 | 1.0000 | 45,719 | 661.6 |
-| word | 0.79557 | [0.7319, 0.8572] | 0.8947 | 0.9737 | 36,076 | 169.8 |
-| character unigram *(published baseline)* | 0.64342 | [0.5725, 0.7149] | 0.8246 | 0.9912 | 1,112 | 662.6 |
+| character bigram | **0.92345** | [0.88476, 0.95723] | 0.98246 | 1.00000 | 45,719 | 661.59 |
+| word | 0.79557 | [0.7319, 0.85716] | 0.89474 | 0.97368 | 36,076 | 169.83 |
+| character unigram | 0.64342 | [0.57247, 0.71486] | 0.82456 | 0.99123 | 1,112 | 662.59 |
+| character unigram + freq-stopwords *(published baseline)* | 0.65022 | [0.5787, 0.72205] | 0.82456 | 0.99123 | 1,105 | 578.24 |
 
 ### Ko-StrategyQA — 9,251 documents, 592 queries
 
 | Tokenizer | nDCG@10 | 95% CI | Recall@10 | Recall@100 | Vocabulary | Tokens/doc |
 |---|---|---|---|---|---|---|
-| character bigram | **0.56108** | [0.5308, 0.5927] | 0.6663 | 0.8248 | 121,930 | 250.8 |
-| word *(published baseline)* | 0.37807 | [0.3471, 0.4095] | 0.4624 | 0.5823 | 149,152 | 67.2 |
-| character unigram | 0.30430 | [0.2765, 0.3324] | 0.4186 | 0.6519 | 2,569 | 251.8 |
+| character bigram | **0.56108** | [0.53077, 0.59271] | 0.66626 | 0.82476 | 121,930 | 250.77 |
+| word *(published baseline)* | 0.37807 | [0.34711, 0.40947] | 0.46236 | 0.58229 | 149,152 | 67.2 |
+| character unigram | 0.30430 | [0.27649, 0.33238] | 0.41860 | 0.65187 | 2,569 | 251.77 |
+| character unigram + freq-stopwords | 0.30136 | [0.27342, 0.32938] | 0.41325 | 0.65413 | 2,560 | 211.51 |
 
 The gap is large: **+0.280 nDCG@10 on AutoRAGRetrieval and +0.183 on Ko-StrategyQA**
 over the respective published baseline, from tokenization alone. No BM25 parameter was
