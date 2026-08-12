@@ -4,11 +4,11 @@ Reproducible measurements of BM25, dense embeddings, and hybrid retrieval on
 **public Korean benchmarks**, with confidence intervals and a pre-registered
 hypothesis set.
 
-> Status: **exp01–exp06 complete (2026-08-12).** BM25, dense and hybrid measured on three
+> Status: **exp01–exp07 complete (2026-08-12).** BM25, dense and hybrid measured on three
 > Korean datasets, 720 to 1,486,752 documents. Every pre-registered hypothesis H1–H12 has
-> a recorded verdict, across retrieval, chunking, reranking, morphological analysis,
-> corpus size and length normalization — three of them undecidable because of how they
-> were written, recorded as such rather than repaired afterwards.
+> a recorded verdict — three of them undecidable because of how they were written,
+> recorded as such rather than repaired afterwards. Results are cross-checked against
+> MTEB's own library, which also killed a claim this repository was about to publish.
 
 ## The pre-registered prediction failed
 
