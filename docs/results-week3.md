@@ -104,7 +104,11 @@ of two weak candidates.
 
 ## Figure
 
-![Hybrid weight curves](img/weight-curves-light.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/weight-curves-dark.png">
+  <img src="img/weight-curves-light.png"
+       alt="nDCG@10 against dense weight for three datasets, with the pre-registered 0.2-0.4 band shaded and each curve's peak marked.">
+</picture>
 
 Regenerate with `python scripts/plot_weight_curves.py`. The shaded band is the
 pre-registered 0.2–0.4 prediction; the marked point is each curve's measured optimum.

@@ -4,41 +4,65 @@ Reproducible measurements of BM25, dense embeddings, and hybrid retrieval on
 **public Korean benchmarks**, with confidence intervals and a pre-registered
 hypothesis set.
 
-> Status: **BM25, dense and hybrid measured on two datasets (2026-08-12).**
-> H1–H3 decided. Hubness (H4) and MIRACL-ko not yet run.
+> Status: **exp01 complete (2026-08-12).** BM25, dense and hybrid measured on three
+> Korean datasets, 720 to 1,486,752 documents. H1–H5 decided.
 
 ## The pre-registered prediction failed
 
-The hybrid weight was predicted, before running anything, to peak at a dense
-weight of **0.2–0.4** and to decline above it. On the dataset where the question
-can be answered, it peaks at **0.90** and climbs nearly to pure dense retrieval:
+The hybrid weight was predicted, before running anything, to peak at a dense weight
+of **0.2–0.4** (shaded below) and to decline above it. It peaks at **0.90, 0.90 and
+0.80** instead, climbing nearly to pure dense retrieval:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/weight-curves-dark.png">
+  <img src="docs/img/weight-curves-light.png"
+       alt="nDCG@10 against dense weight for three datasets. The pre-registered 0.2-0.4 band is shaded. AutoRAGRetrieval is flat across the whole sweep, peaking at 0.25 and 0.60; Ko-StrategyQA rises steadily to a peak at 0.90; MIRACL-ko rises to a peak at 0.80.">
+</picture>
 
 | Dense weight | 0.0 | 0.2 | 0.4 | 0.6 | 0.8 | 0.9 | 1.0 |
 |---|---|---|---|---|---|---|---|
 | Ko-StrategyQA / e5-large | 0.5611 | 0.6166 | 0.6796 | 0.7461 | 0.7914 | **0.8056** | 0.8035 |
+| MIRACL-ko / e5-large | 0.3507 | 0.4127 | 0.4913 | 0.6027 | **0.7071** | 0.7014 | 0.6649 |
 
-On AutoRAGRetrieval, 19 of 21 weights are statistically indistinguishable from the
-best, so the optimum **cannot be located** and is reported as such rather than read
-off a point estimate.
+On AutoRAGRetrieval no weight is distinguishable from any other — including w = 0,
+pure BM25 — so the optimum **cannot be located** and is reported as such rather than
+read off a point estimate. That dataset is also the only one whose documents the
+encoders truncate (36.8% exceed 512 tokens), and the only one where BM25 wins.
 
 The prediction came from a private measurement on Korean business documents. It does
 not generalize. That result is the point of the repository, not an embarrassment to
-it — see [`PREREGISTRATION.md`](PREREGISTRATION.md), whose commit predates every
-number here, and [`docs/results-week2.md`](docs/results-week2.md).
+it — see [`PREREGISTRATION.md`](PREREGISTRATION.md), whose commits predate every
+number here, and [`docs/results-week3.md`](docs/results-week3.md).
+
+## Five published numbers reproduced
+
+The harness was validated against other people's results before it reported any of
+its own — a gate fixed in advance at ±0.02 nDCG@10.
+
+| Source | Model | Dataset | Published | Measured |
+|---|---|---|---|---|
+| MTEB | `baseline-bm25s` | AutoRAGRetrieval | 0.65022 | 0.64342 |
+| MTEB | `baseline-bm25s` | Ko-StrategyQA | 0.37808 | 0.37807 |
+| KURE | `multilingual-e5-large` | AutoRAGRetrieval | 0.81337 | **0.81337** |
+| KURE | `multilingual-e5-large` | Ko-StrategyQA | 0.80348 | **0.80348** |
+| KURE | `multilingual-e5-large` | MIRACL-ko | 0.66486 | **0.66486** |
+
+The three exact matches are addressed against the pre-registered "treat 0.000 as
+suspicious" rule in [`docs/results-week2.md`](docs/results-week2.md).
 
 ## The published Korean BM25 baselines understate BM25
 
-MTEB's published BM25 baseline scores **0.65022** nDCG@10 on AutoRAGRetrieval and
-**0.37808** on Ko-StrategyQA. Both are reproduced here within the pre-registered
-0.02 tolerance — and both turn out to be limited by tokenization rather than by
-BM25. Switching to character bigrams, with no parameter tuning:
+Both published BM25 numbers are reproduced above — and both turn out to be limited by
+tokenization rather than by BM25. Switching to character bigrams, with no parameter
+tuning:
 
 | Dataset | Published baseline | Character bigram | Gain |
 |---|---|---|---|
-| AutoRAGRetrieval | 0.64342 *(reproduced; character unigram)* | **0.92345** | +0.280 |
-| Ko-StrategyQA | 0.37807 *(reproduced; word-level)* | **0.56108** | +0.183 |
+| AutoRAGRetrieval | 0.65022 | **0.92345** | +0.273 |
+| Ko-StrategyQA | 0.37808 | **0.56108** | +0.183 |
+| MIRACL-ko | 0.24521 | **0.35067** | +0.105 |
 
-95% bootstrap intervals do not overlap on either dataset. A further finding fell
+95% bootstrap intervals do not overlap on any dataset. A further finding fell
 out of the gate: **the two published numbers were produced with different
 tokenizers**, which is not stated on any leaderboard and which this repository's
 own pre-measurement notes got wrong.
