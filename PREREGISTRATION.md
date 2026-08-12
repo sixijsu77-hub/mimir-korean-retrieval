@@ -331,6 +331,46 @@ accuracy is not a fix, and that trade-off should be visible rather than argued.
 If H10 is rejected, the cause remains unidentified and is reported as such. Two failed
 explanations and one failed manipulation is a more useful record than a plausible story.
 
+## 4f. H11 — how does character-bigram BM25 compare to Korean morphological analysis?
+
+Added 2026-08-12, before this was run. Every claim in this repository about the sparse
+side compares character bigrams against **what MTEB currently uses** — word-level or
+character-unigram splitting. Production Korean search does neither: it typically runs a
+morphological analyser (`nori` in Elasticsearch, `mecab-ko`, `kiwi`), which separates
+stems from the particles Korean attaches to them.
+
+That gap matters for the recommendation this repository is about to make upstream. If
+character bigrams also beat morphological analysis, the recommendation is sound and the
+finding reaches production systems too. If morphological analysis wins, the correct
+recommendation to MTEB is a morphological tokenizer, and the bigram framing is wrong.
+
+**Tokenizer.** `kiwipiepy` 0.23.2 (Kiwi), pinned. Two variants:
+
+| Variant | Definition |
+|---|---|
+| `morph` | every morpheme surface form the analyser returns |
+| `morph_content` | morphemes whose tag does **not** start with `J` (particles), `E` (endings), `X` (affixes) or `S` (symbols) — the content-word filter production configurations usually apply |
+
+Everything else is unchanged from section 2b: `bm25s` defaults (Lucene, k1 = 1.5,
+b = 0.75), documents indexed as `title + "\n" + text`, the same datasets and metric.
+
+| ID | Prediction | How it is falsified |
+|---|---|---|
+| H11a | Both morphological variants beat the word-level tokenizer on all three retrieval datasets, with paired intervals excluding 0 | Word-level is not beaten on some dataset |
+| H11b | **Character bigrams score at least as high as the better morphological variant on a majority of the three datasets**, and where bigrams lose the paired interval includes 0 | Morphological analysis beats character bigrams on ≥ 2 of 3 datasets with intervals excluding 0 |
+
+H11a is close to certain and is registered anyway, so that the pair is a real test rather
+than only the interesting half.
+
+H11b is the one that decides the upstream recommendation, and it is registered as a
+prediction I am not confident in. Character n-grams are historically strong for Korean
+because they tolerate analyser errors, unknown words and compounds; morphological analysis
+produces cleaner terms and better IDF structure. Either could win.
+
+Also reported: the same comparison on `MIRACLReranking` ko, index size, and tokenization
+time — a tokenizer that wins on accuracy but costs an order of magnitude more to run is a
+different recommendation than one that does not.
+
 ## 5. Stopping rules
 
 - Any dataset whose corpus cannot be indexed within available time/disk is **reported as
@@ -354,6 +394,12 @@ result, and the private measurement is reinterpreted as corpus-specific.
 Amendments are only legitimate before results exist. Each entry records what
 changed and why, so a reader can check the ordering against `git log` rather
 than taking it on trust.
+
+**2026-08-12 — H11 (morphological analysis) added, before it was run.** Section 4f.
+Every sparse-side claim so far compares character bigrams against what MTEB uses, not
+against what production Korean search uses. This decides whether the upstream
+recommendation should be bigrams or a morphological tokenizer. Verdicts for H1–H10 are
+not touched.
 
 **2026-08-12 — H9 (sparse-side dependence) and H10 (hubness mechanism) added.**
 Section 4e. Both target items the published results list as open: whether the weight
