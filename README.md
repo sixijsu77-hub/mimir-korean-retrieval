@@ -75,6 +75,15 @@ Reported upstream: [embeddings-benchmark/mteb#5157](https://github.com/embedding
 
 Measurements, caveats and reproduction commands: [`docs/results-week1.md`](docs/results-week1.md).
 
+## If you are here to tune your own system
+
+[`docs/should-you-tune-the-weight.md`](docs/should-you-tune-the-weight.md) turns these
+measurements into a procedure: sweep the whole weight range, compare the curve's
+amplitude to your confidence interval, and decide whether there is anything to tune
+before collecting more evaluation queries. On one of the three datasets here, no weight
+is distinguishable from any other — the correct output is "it does not matter", not a
+tuned value.
+
 ## Why this exists
 
 Hybrid retrieval is widely recommended, but the *weight* is usually guessed.
