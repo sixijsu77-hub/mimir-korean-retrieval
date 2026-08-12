@@ -61,14 +61,16 @@ This was reported to the MTEB project as
 with the reproduction commands below.
 
 This matches how MTEB's Korean handling changed over time, traced through the source in
-`docs/baselines.md`: versions up to 2.18.0 had no Korean entry in the tokenizer language
-table and fell through to the word-level default, while 2.18.16 maps `kor` to character
-unigrams. Ko-StrategyQA's result file records `mteb_version: 2.10.8`, which is in the
-word-level era — consistent. AutoRAGRetrieval's records `2.12.30`, which is *also* in
-the word-level era, and that is **not** consistent with its measured tokenizer. Its
-result sits in the `0_3_0` folder, a revision string that did not exist before MTEB
-2.15.0, so the recorded `mteb_version` field appears stale and the run was almost
-certainly made with a later version.
+`docs/baselines.md`: versions through 2.18.11 had no Korean entry in the tokenizer
+language table and fell through to the word-level default, and **2.18.12** is where `kor`
+is first mapped to character unigrams. Ko-StrategyQA's result file records
+`mteb_version: 2.10.8`, which is in the word-level era — consistent. AutoRAGRetrieval's
+records `2.12.30`, which is *also* in the word-level era, and that is **not** consistent
+with its measured tokenizer. At 2.12.30 none of the three ingredients its score needs
+exists: no language table, no `_unicode_tokenize`, no `freq_threshold`. Its result sits in
+the `0_3_0` folder, a revision string that did not exist before MTEB 2.14.9, so the
+recorded `mteb_version` field appears stale and the run was almost certainly made with a
+later version.
 
 That metadata inconsistency was noticed and written down before any measurement — it is
 in the commit that first published `docs/baselines.md`, which predates this one. What

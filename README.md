@@ -75,8 +75,9 @@ them apply **English stopwords and an English Snowball stemmer to Korean**:
 | Ko-StrategyQA | 0.37808 | word split, English stopwords, English stemmer | 2.10.8 |
 | AutoRAGRetrieval | 0.65022 | character unigram + frequency stopwords | 2.12.30 |
 
-Character unigrams did not exist in that codebase until 2.18.8, and Korean was not routed
-to them until 2.18.12 — so the third row's recorded version cannot have produced its own
+At 2.12.30 the codebase has no language table, no character tokenizer and no
+frequency-stopword step; all three arrive at 2.14.9, and Korean is not routed to
+characters until 2.18.12. So the third row's recorded version cannot have produced its own
 score. That is the substance of the report filed upstream.
 
 Against a tokenizer chosen for Korean rather than inherited from English, the same BM25 —
