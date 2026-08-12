@@ -118,6 +118,84 @@ demonstrated, not assumed.
 No new measurement is reported until this gate passes. If it never passes, that failure
 is itself the published result, with the causes investigated and written down.
 
+## 4b. Week-3 additions — registered before the measurements they govern
+
+Added 2026-08-12, after week 2 and **before any week-3 measurement was run**. Week 2
+reported that hybrid weights could not be distinguished on AutoRAGRetrieval using
+overlapping marginal intervals, and flagged that a paired test would be more powerful.
+The paired test is specified here, with its decision rule fixed, rather than added
+after seeing which weights it happens to separate. `git log` orders this against
+`results/`.
+
+### 4b.1 Paired difference test for hybrid weights
+
+The week-2 test compared two marginal bootstrap intervals, which is conservative
+because every weight is scored on the same queries. The paired version:
+
+- **Statistic**: per-query nDCG@10 difference between two weights,
+  `d_i = s_i(w_a) − s_i(w_b)`.
+- **Bootstrap**: resample queries with replacement, B = 10,000, seed 0; percentile
+  interval on `mean(d)`.
+- **Distinguishable**: the interval excludes 0.
+- **Comparison set**: every weight against the point-estimate best — 20 comparisons
+  per curve. The **primary** result uses a **Bonferroni-corrected** interval
+  (α = 0.05 / 20, i.e. 99.75%). The uncorrected 95% version is reported alongside.
+  Not correcting would make the indistinguishable set smaller and the claims
+  stronger, which is the wrong direction for this repository.
+- **Known bias**: the reference weight is the argmax of the same data, which favours
+  it. The corrected set is what gets reported as the answer.
+- **H2 is re-evaluated with this test.** H2 survives if any weight in 0.2–0.4 lies in
+  the corrected indistinguishable set. The week-2 verdict stands unless this test
+  overturns it, and if it does, both verdicts are shown.
+
+### 4b.2 H4 — hubness, operationalized
+
+H4 as written ("a small number of passages appear in top-k for disproportionately many
+unrelated queries") has no threshold. Fixing one now.
+
+- For each document `d`, count `N10(d)` = queries whose top-10 contains `d`, and
+  **`N10_irr(d)`** = queries whose top-10 contains `d` **and** for which `d` has
+  relevance 0. `N10_irr` is the primary quantity: a document legitimately retrieved
+  for its own relevant query is not a hub.
+- **Primary statistic**: skewness of `N10_irr` over all documents.
+- **Null model**: for each query draw 10 documents uniformly without replacement from
+  the corpus, recompute the statistic; 1,000 replicates, seed 0. This accounts for the
+  counts being sparse (expected `N10` is 1.58 on AutoRAGRetrieval and 0.64 on
+  Ko-StrategyQA), where raw skewness is otherwise hard to interpret.
+- **H4 supported** if the observed skewness for the dense method exceeds the **99th
+  percentile** of the null distribution.
+- **Also reported**, as magnitude rather than as the test: max `N10_irr`, the share of
+  irrelevant top-10 slots taken by the top 1% of documents, the Gini coefficient of
+  `N10_irr`, and the number of documents never retrieved.
+- **Contrast**: the same statistics for character-bigram BM25 on the same queries. The
+  original observation was about a dense model specifically, so dense-vs-sparse is
+  reported even though H4 does not name it.
+
+### 4b.3 H5 — a new prediction, for a dataset not yet touched
+
+| ID | Prediction | How it is falsified |
+|---|---|---|
+| H5 | On MIRACL-ko (dev, 213 queries, 1,486,752 documents), the hybrid optimum sits at dense weight **≥ 0.5**, and `multilingual-e5-large` alone scores higher than character-bigram BM25 alone | Optimum below 0.5, or BM25 ≥ dense |
+
+Stated mechanism, so that a wrong prediction is informative: week 2 found this pattern
+on Ko-StrategyQA, whose passages are short Wikipedia text that the encoders barely
+truncate (1.5% over 512 tokens). MIRACL-ko has the same profile (mean 175 characters).
+AutoRAGRetrieval, the one dataset where the pattern did not hold, truncates 36.8% of
+its documents. If document length is what drives the difference, MIRACL-ko should
+behave like Ko-StrategyQA.
+
+**H5 is registered before MIRACL-ko has been retrieved from at all.** No BM25, dense or
+hybrid number exists for it at the time of writing — only the corpus statistics in
+`docs/datasets.md`.
+
+### 4b.4 MIRACL-ko execution
+
+Encoding throughput, BM25 index build time and peak memory are **measured first** and
+reported whether or not the full run completes. If it cannot complete, section 5's
+stopping rule applies: reported as not run, with the measured numbers, not silently
+dropped. Published comparisons available for it — BM25 0.24521, KURE
+`multilingual-e5-large` 0.66486 — are reproduction checks, not gates.
+
 ## 5. Stopping rules
 
 - Any dataset whose corpus cannot be indexed within available time/disk is **reported as
@@ -141,6 +219,14 @@ result, and the private measurement is reinterpreted as corpus-specific.
 Amendments are only legitimate before results exist. Each entry records what
 changed and why, so a reader can check the ordering against `git log` rather
 than taking it on trust.
+
+**2026-08-12 (week 3) — paired test, hubness threshold, and H5 added.** Section 4b in
+full. Three things are being fixed *before* the measurements they govern: the paired
+difference test flagged as missing in week 2, an operational threshold for H4, and a
+new prediction H5 for MIRACL-ko, which has not been retrieved from at all at the time
+of this commit. H1–H3 verdicts from week 2 are **not** touched. The commit preceding
+this one contains the week-2 results; the commit following it will contain the week-3
+measurements, and `git log` is what orders them.
 
 **2026-08-12 — specifics fixed before the first run.** The original version named
 neither the gate dataset, the target number, the models, the tokenizers, nor the
