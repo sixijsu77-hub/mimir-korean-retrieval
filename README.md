@@ -4,9 +4,10 @@ Reproducible measurements of BM25, dense embeddings, and hybrid retrieval on
 **public Korean benchmarks**, with confidence intervals and a pre-registered
 hypothesis set.
 
-> Status: **exp01 complete (2026-08-12).** BM25, dense and hybrid measured on three
-> Korean datasets, 720 to 1,486,752 documents. H1–H8 decided, across retrieval,
-> chunking and reranking.
+> Status: **exp01–exp05 complete (2026-08-12).** BM25, dense and hybrid measured on three
+> Korean datasets, 720 to 1,486,752 documents. H1–H12 decided across retrieval, chunking,
+> reranking, morphological analysis and corpus size — three of them recorded as
+> undecidable because of how they were written, not repaired afterwards.
 
 ## The pre-registered prediction failed
 
@@ -27,8 +28,22 @@ of **0.2–0.4** (shaded below) and to decline above it. It peaks at **0.90, 0.9
 
 On AutoRAGRetrieval no weight is distinguishable from any other — including w = 0,
 pure BM25 — so the optimum **cannot be located** and is reported as such rather than
-read off a point estimate. That dataset is also the only one whose documents the
-encoders truncate (36.8% exceed 512 tokens), and the only one where BM25 wins.
+read off a point estimate.
+
+**That task ranks retrievers in the opposite direction from the other two.** Character-
+bigram BM25, with nothing tuned, outscores **all 18** dense models KURE publishes on
+AutoRAGRetrieval — and **none** of them on Ko-StrategyQA or MIRACL-ko:
+
+| Task | BM25 bigram | best of 18 | median of 18 | models BM25 beats |
+|---|---|---|---|---|
+| AutoRAGRetrieval | **0.92345** | 0.87379 | 0.77996 | **18 of 18** |
+| Ko-StrategyQA | 0.56108 | 0.81080 | 0.79405 | 0 of 18 |
+| MIRACL-ko | 0.35067 | 0.70315 | 0.62697 | 0 of 18 |
+
+Four explanations were tested and none accounts for it: query provenance, corpus size,
+truncation, and a weakness in one model. **Cause not established** —
+[`docs/results-exp05-corpus-size.md`](docs/results-exp05-corpus-size.md) records what was
+ruled out and how.
 
 The prediction came from a private measurement on Korean business documents. It does
 not generalize. That result is the point of the repository, not an embarrassment to
@@ -123,8 +138,9 @@ tuned value.
 | [`docs/results-exp02-chunking.md`](docs/results-exp02-chunking.md) | Chunking as a manipulation of the truncation story; H7 decided |
 | [`docs/results-exp03-reranking.md`](docs/results-exp03-reranking.md) | Reranking, and how a weak reranker destroys a good ranking; H8 decided |
 | [`docs/results-exp04-morphology.md`](docs/results-exp04-morphology.md) | Character bigrams against Kiwi morphological analysis; H11 decided |
-| [`docs/results-exp05-corpus-size.md`](docs/results-exp05-corpus-size.md) | Corpus size swept over four orders of magnitude, both directions; H12 decided |
+| [`docs/results-exp05-corpus-size.md`](docs/results-exp05-corpus-size.md) | Corpus size swept over four orders of magnitude, both directions; H12 decided; BM25 against all 18 published dense models |
 | [`docs/should-you-tune-the-weight.md`](docs/should-you-tune-the-weight.md) | The practitioner procedure the above adds up to |
+| [`docs/preregistration-checklist.md`](docs/preregistration-checklist.md) | The five checks that would have caught three undecidable hypotheses here |
 | [`docs/errata.md`](docs/errata.md) | What was published wrong, for how long, and what changed |
 
 Every hypothesis and its verdict is in [`PREREGISTRATION.md`](PREREGISTRATION.md);

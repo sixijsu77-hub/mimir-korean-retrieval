@@ -53,6 +53,55 @@ python scripts/check_reported_numbers.py
 
 ---
 
+## 2026-08-12 — blamed one model for what turned out to be the dataset
+
+[`results-exp05-corpus-size.md`](results-exp05-corpus-size.md) concluded that the question
+worth asking was **"why is `multilingual-e5-large` weak on AutoRAGRetrieval"**. That named
+a model when the evidence only supported naming the task, and it would have sent a reader
+looking at the wrong thing.
+
+KURE publishes per-task scores for 18 embedding models on these same three datasets. Read
+rather than re-run: character-bigram BM25 beats **18 of 18** on AutoRAGRetrieval and **0 of
+18** on both Ko-StrategyQA and MIRACL-ko. The best dense model on AutoRAGRetrieval reaches
+0.87379 against BM25's 0.92345.
+
+Nothing about `multilingual-e5-large` is unusual here. Corrected in place, with the
+18-model table added and the raw values recorded in
+[`../results/kure_per_task.jsonl`](../results/kure_per_task.jsonl).
+
+**The check that applies:** an effect seen in one model is a fact about that run. Before
+writing a sentence that names the model, ask whether published results for other models on
+the same task already answer it — here they did, at no compute cost.
+
+---
+
+## 2026-08-12 — "changes its ranking of the top 10 not at all", which was never measured
+
+[`results-exp05-corpus-size.md`](results-exp05-corpus-size.md) said of the padding
+direction that adding 71,280 distractor documents "changes its ranking of the top 10 not
+at all" for dense retrieval. **That was inferred from an unchanged nDCG@10 and is false.**
+
+With one relevant document per query, nDCG@10 depends only on that document's rank.
+Distractors can enter the top 10, and even take rank 1, without moving the metric. Counted
+at 72,000 documents: added documents appear in the dense top 10 for **16–22 of 114
+queries**, 0.43 per query, reaching rank 1 in two of the five seeds.
+
+The claim the measurement does support is narrower and had to be checked separately: across
+five sizes and five seeds, **no query's dense per-query nDCG@10 changed** — the added
+documents never outrank a relevant one. The rank-1 cases fall among the 7 of 114 queries
+where dense already placed the relevant document outside the top 10.
+
+**Why it mattered.** An identical score to five decimals has two explanations — complete
+separation, or the added documents never reaching the index at all — and nDCG@10 cannot
+tell them apart. The harness had no field counting whether a distractor was ever ranked,
+so the wiring was unproven in exactly the way `CLAUDE.md` rule 10 describes. `harness/
+corpus_size.py` now records `distractor_reach` for both retrievers on every padded run.
+
+**The check that applies:** when a metric is unchanged, say what was held constant and
+count it. "Nothing changed" is a measurement, not an inference from a summary statistic.
+
+---
+
 ## 2026-08-12 — a version-trace table with rows that were not read
 
 A table tracing MTEB's Korean handling across versions appeared in

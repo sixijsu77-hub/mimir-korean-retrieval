@@ -119,12 +119,28 @@ def main() -> int:
             t1 = time.time()
             s_sparse = retrieval.bm25_score_matrix([all_tokens[i] for i in sel], q_tokens)
             s_dense = dense.cosine_score_matrix(q_emb, d_emb[sel])
-            scores = {}
+            is_pad = np.array([d.startswith("PAD::") for d in sub_ids])
+            scores, reach = {}, {}
             for label, S in (("bm25", s_sparse), ("dense", s_dense)):
-                run = {q: [sub_ids[j] for j in np.argsort(-S[i])[:100]]
+                order = np.argsort(-S, axis=1)
+                run = {q: [sub_ids[j] for j in order[i][:100]]
                        for i, q in enumerate(qids)}
                 m, pq = metrics.evaluate(run, qrels)
                 scores[label] = (m["ndcg_at_10"], {q: v["ndcg_at_10"] for q, v in pq.items()})
+                # An unchanged nDCG@10 does not mean an unchanged ranking: with one
+                # relevant document per query the metric only tracks that document's
+                # rank. Count how far the added documents actually reach.
+                if is_pad.any():
+                    t10, t100 = is_pad[order[:, :10]], is_pad[order[:, :100]]
+                    first = [np.where(is_pad[o])[0] for o in order]
+                    best = [int(w[0]) + 1 for w in first if len(w)]
+                    reach[label] = {
+                        "pad_in_top10_mean": round(float(t10.sum(1).mean()), 3),
+                        "pad_in_top100_mean": round(float(t100.sum(1).mean()), 3),
+                        "queries_with_pad_in_top10": int((t10.sum(1) > 0).sum()),
+                        "pad_best_rank_min": min(best) if best else None,
+                        "pad_best_rank_median": int(np.median(best)) if best else None,
+                    }
 
             a = [scores["bm25"][1][q] for q in qids]
             b = [scores["dense"][1][q] for q in qids]
@@ -146,6 +162,7 @@ def main() -> int:
                 "paired_bm25_minus_dense": round(diff, 5),
                 "ci95": [round(lo, 5), round(hi, 5)],
                 "distinguishable": bool(lo > 0 or hi < 0),
+                "distractor_reach": reach or None,
                 "seconds": round(time.time() - t1, 1),
                 "per_query_ndcg_at_10": {
                     "bm25": {q: round(v, 5) for q, v in scores["bm25"][1].items()},
@@ -160,6 +177,10 @@ def main() -> int:
               f"diff={diff:+.5f} [{lo:+.5f},{hi:+.5f}] "
               f"{'distinguishable' if record['distinguishable'] else 'not distinguishable'}  "
               f"{record['seconds']}s")
+            for label, r in (reach or {}).items():
+                p(f"      {label:5s} added docs in top-10: {r['pad_in_top10_mean']:.2f}/query, "
+                  f"{r['queries_with_pad_in_top10']}/{len(qids)} queries, best rank "
+                  f"{r['pad_best_rank_min']}")
     p(f"  wrote -> {args.out}")
     return 0
 

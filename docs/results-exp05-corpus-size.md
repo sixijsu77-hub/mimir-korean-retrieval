@@ -90,15 +90,59 @@ BM25 scoring 0.92 on a 720-document corpus is **ordinary** — thin MIRACL-ko to
 size and BM25 gets 0.94. The number that is out of line is **dense at 0.81337**, against
 0.95638 for the same model on a same-size corpus.
 
-So the question changes. It is not "why is BM25 so strong on AutoRAGRetrieval"; it is
-**"why is `multilingual-e5-large` weak on AutoRAGRetrieval"**.
+So the question changes. It is not "why is BM25 so strong on AutoRAGRetrieval".
 
-The padding direction says the same thing from the other side, and more bluntly: dense
-scores **0.81337 at every padded size, identical to five decimal places**. Adding 71,280
-distractor documents changes its ranking of the top 10 not at all, while BM25 falls 0.075.
+### And it is not about one model either
+
+*Added after the section below was first published, which framed this as a question about
+`multilingual-e5-large`. That framing was too narrow and pointed readers at the wrong
+place.* KURE publishes per-task nDCG@10 for **18 embedding models** on these same three
+tasks; the numbers are in [`results/kure_per_task.jsonl`](../results/kure_per_task.jsonl),
+read from that project's `eval/results`, not re-run here.
+
+| Task | character-bigram BM25 | best of the 18 | median of the 18 | models BM25 beats |
+|---|---|---|---|---|
+| AutoRAGRetrieval | 0.92345 | 0.87379 (`dragonkue/BGE-m3-ko`) | 0.77996 | **18 of 18** |
+| Ko-StrategyQA | 0.56108 | 0.81080 (`Alibaba-NLP/gte-Qwen2-7B-instruct`) | 0.79405 | 0 of 18 |
+| MIRACL-ko | 0.35067 | 0.70315 (`BAAI/bge-multilingual-gemma2`) | 0.62697 | 0 of 18 |
+
+**An untuned sparse baseline outscores every dense model on AutoRAGRetrieval and none of
+them on the other two.** This is a property of the dataset, not of any model.
+
+The comparison is only legitimate because the dense side was checked first: this harness
+reproduces KURE's `multilingual-e5-large` figures on all three tasks to five decimals
+(0.81337 / 0.80348 / 0.66486), so its numbers and KURE's are on the same footing.
+
+One thing this does *not* show is a corpus-size effect on the dense side. Across all 18
+models, AutoRAGRetrieval (720 documents) scores a median of only **+0.015** above
+Ko-StrategyQA (9,251 documents), and 8 of the 18 score *lower* on the smaller corpus. That
+matches the thinning curve above, where dense gains just 0.012 between 7,200 and 720
+documents because it is already near its ceiling. The dense models are behaving normally;
+what is unusual is how well lexical matching does here.
+
+The padding direction says the same thing from the other side: dense scores **0.81337 at
+every padded size, identical to five decimal places**, while BM25 falls 0.075.
+
+**An unchanged score is not an unchanged ranking, so the added documents were counted
+rather than assumed absent.** With one relevant document per query, nDCG@10 tracks only
+that document's rank — distractors can fill the rest of the top 10 without moving it. At
+72,000 documents (99% of the corpus added):
+
+| | added docs in top-10 | queries with ≥1 | best rank reached | queries whose per-query nDCG@10 changed |
+|---|---|---|---|---|
+| BM25 character bigram | 3.38 per query | 83–90 of 114 | 1 | many — the score falls |
+| dense | 0.43 per query | 16–22 of 114 | 1 | **0 of 114** |
+
+So the padding is in the index and does reach the dense top 10; what it never does is
+outrank a relevant document. Across five sizes and five seeds, **not one query's dense
+per-query nDCG@10 changed**. The cases where an added document takes rank 1 are among the
+7 of 114 queries where dense already placed the relevant document outside the top 10, so
+they contribute 0 either way.
+
 The pre-registration called this direction confounded because MIRACL-ko is Wikipedia and
-AutoRAGRetrieval is finance, law and public administration; a distractor set that leaves
-dense literally unmoved confirms it was. It is a lower bound, and it did not bind.
+AutoRAGRetrieval is finance, law and public administration. It was: the distractors are
+out-of-domain and dense separates them almost completely, so the test is a lower bound,
+and it did not bind. The same distractors displace BM25 eight times as often.
 
 ## Two explanations tested, neither sufficient
 
@@ -134,15 +178,20 @@ distinguishably ahead.
 
 ## Cause not established
 
-AutoRAGRetrieval remains a dataset where an untuned sparse method beats a tuned Korean
-embedding model, and **none of the three candidates accounts for it**: not query
-provenance, not corpus size, not truncation. What has been ruled out is written above so
-the next attempt does not repeat it.
+AutoRAGRetrieval is a dataset where an untuned sparse method beats **all 18** published
+dense models, and **none of the four candidates accounts for it**: not query provenance,
+not corpus size, not truncation, and not a weakness in one model. What has been ruled out
+is written above so the next attempt does not repeat it.
 
-Candidates **not** checked: domain (the model's training data against finance, legal and
-public-administration Korean), whether the relevant documents are unusually long *given*
-that the queries are short, and whether the same pattern appears for other embedding
-models on this dataset. Listing them is not explaining them.
+Candidates **not** checked: domain (embedding training data against finance, legal and
+public-administration Korean), and whether the relevant documents are unusually long
+*given* that the queries are short. Listing them is not explaining them.
+
+**What is established is enough to matter without the cause.** On this task the ordering
+between sparse and dense inverts completely against the other two Korean retrieval tasks,
+and it does so for every model measured. A benchmark aggregating AutoRAGRetrieval with
+tasks like Ko-StrategyQA and MIRACL-ko is averaging over a task that ranks retrievers in
+the opposite direction — which is worth knowing whether or not the reason is known.
 
 ## Reproducing
 
