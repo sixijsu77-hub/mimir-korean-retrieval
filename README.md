@@ -5,7 +5,8 @@ Reproducible measurements of BM25, dense embeddings, and hybrid retrieval on
 hypothesis set.
 
 > Status: **exp01 complete (2026-08-12).** BM25, dense and hybrid measured on three
-> Korean datasets, 720 to 1,486,752 documents. H1–H5 decided.
+> Korean datasets, 720 to 1,486,752 documents. H1–H8 decided, across retrieval,
+> chunking and reranking.
 
 ## The pre-registered prediction failed
 
@@ -95,6 +96,7 @@ tuned value.
 | [`docs/results-week3.md`](docs/results-week3.md) | Paired testing, hubness, MIRACL-ko; H4–H5 decided |
 | [`docs/results-week4.md`](docs/results-week4.md) | How many queries a weight needs; H6 decided |
 | [`docs/results-exp02-chunking.md`](docs/results-exp02-chunking.md) | Chunking as a manipulation of the truncation story; H7 decided |
+| [`docs/results-exp03-reranking.md`](docs/results-exp03-reranking.md) | Reranking, and how a weak reranker destroys a good ranking; H8 decided |
 | [`docs/should-you-tune-the-weight.md`](docs/should-you-tune-the-weight.md) | The practitioner procedure the above adds up to |
 | [`docs/errata.md`](docs/errata.md) | What was published wrong, for how long, and what changed |
 
