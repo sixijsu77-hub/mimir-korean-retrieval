@@ -4,7 +4,8 @@
 # --- Stages 1-2: dataset access and BM25 ------------------------------------
 # These five lines are everything the BM25 results need, including the published
 # baseline reproductions. Install just these to check those numbers:
-#   pip install huggingface-hub pyarrow numpy bm25s PyStemmer
+#   pip install "huggingface-hub==1.27.0" "pyarrow==25.0.1" "numpy==2.2.6" \
+#               "bm25s==0.3.10" "PyStemmer==3.1.0"
 #
 # huggingface_hub pins file revisions and reads repo sizes without downloading.
 # bm25s is the same engine MTEB's published baseline uses, so a mismatch against

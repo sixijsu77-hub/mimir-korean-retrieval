@@ -229,7 +229,8 @@ pip install -U pip
 
 # BM25 results need only these five; `requirements.txt` additionally carries
 # Kiwi (exp04) and the dense stage (torch, ~2 GB).
-pip install huggingface-hub pyarrow numpy bm25s PyStemmer
+pip install "huggingface-hub==1.27.0" "pyarrow==25.0.1" "numpy==2.2.6" \
+            "bm25s==0.3.10" "PyStemmer==3.1.0"
 
 # Dataset inventory (~12 s cached; downloads 234 MB the first time)
 python scripts/measure_datasets.py --out results/dataset_inventory.jsonl

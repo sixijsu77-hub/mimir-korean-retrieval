@@ -115,6 +115,11 @@ version the result folder names, and re-running the word-level configuration giv
 identical to 0.3.10. Prompt handling and tie-breaking were not reached, since the residual
 is fully accounted for without them.
 
+**The library version is not what separates the published Korean results either.** Those
+`0_1_10` and `0_3_0` folder names are `bm25s` library versions, and the four reproductions
+here span both — three recorded under `0_1_10`, one under `0_3_0` — yet a single `bm25s`
+0.3.10 reproduces all four. What separates them is the tokenizer.
+
 **This interacts badly with the character-level path.** Removing a frequent *word* in
 English discards a function word. Removing a frequent *character* in Korean discards that
 syllable from every word containing it — `이`, `가` and `기` are particles but also
@@ -179,7 +184,8 @@ Wikipedia-derived and contains English titles for the stemmer to act on.
 ## Reproducing
 
 ```bash
-pip install huggingface-hub pyarrow numpy bm25s PyStemmer
+pip install "huggingface-hub==1.27.0" "pyarrow==25.0.1" "numpy==2.2.6" \
+            "bm25s==0.3.10" "PyStemmer==3.1.0"
 python -m harness.evaluate --dataset AutoRAGRetrieval --tokenizer char_unigram \
     --freq-threshold 0.9 --out results/gate_bm25.jsonl
 python -m harness.evaluate --dataset Ko-StrategyQA --tokenizer word \

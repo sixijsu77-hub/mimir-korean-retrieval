@@ -156,7 +156,7 @@ reported as not run, with its size, rather than quietly dropped.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install huggingface-hub pyarrow numpy
+pip install "huggingface-hub==1.27.0" "pyarrow==25.0.1" "numpy==2.2.6"
 python scripts/measure_datasets.py --out results/dataset_inventory.jsonl
 ```
 
