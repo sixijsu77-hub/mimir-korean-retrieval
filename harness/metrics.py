@@ -56,6 +56,59 @@ def evaluate(
     return means, per_query
 
 
+def paired_bootstrap_means(
+    a: list[float],
+    b: list[float],
+    n_resamples: int = 10000,
+    seed: int = 0,
+    chunk: int = 20000,
+):
+    """Sorted bootstrap means of (a - b), resampling queries.
+
+    Paired because every condition is scored on the same queries; comparing two
+    marginal intervals instead is conservative. Resampling is chunked to bound
+    memory; a single chunk covers the pre-registered 10,000, so that case draws
+    exactly as an unchunked implementation would.
+    """
+    import numpy as np
+
+    d = np.asarray(a, dtype=np.float64) - np.asarray(b, dtype=np.float64)
+    n = d.shape[0]
+    if n == 0:
+        return 0.0, np.zeros(0)
+    rng = np.random.default_rng(seed)
+    means = np.empty(n_resamples, dtype=np.float64)
+    done = 0
+    while done < n_resamples:
+        m = min(chunk, n_resamples - done)
+        means[done:done + m] = d[rng.integers(0, n, size=(m, n))].mean(axis=1)
+        done += m
+    means.sort()
+    return float(d.mean()), means
+
+
+def percentile_interval(means, alpha: float) -> tuple[float, float]:
+    b = means.shape[0]
+    if b == 0:
+        return (0.0, 0.0)
+    lo = means[int(b * alpha / 2)]
+    hi = means[min(int(b * (1 - alpha / 2)), b - 1)]
+    return (float(lo), float(hi))
+
+
+def paired_bootstrap_diff(
+    a: list[float],
+    b: list[float],
+    n_resamples: int = 10000,
+    alpha: float = 0.05,
+    seed: int = 0,
+) -> tuple[float, float, float]:
+    """Interval on mean(a - b). Distinguishable means the interval excludes 0."""
+    mean_diff, means = paired_bootstrap_means(a, b, n_resamples=n_resamples, seed=seed)
+    lo, hi = percentile_interval(means, alpha)
+    return (mean_diff, lo, hi)
+
+
 def bootstrap_ci_values(
     values: list[float],
     n_resamples: int = 10000,

@@ -23,10 +23,25 @@ def char_unigram(texts: list[str]) -> list[list[str]]:
 
 
 def char_bigram(texts: list[str]) -> list[list[str]]:
+    """Adjacent character pairs, with the pair strings pooled.
+
+    Pooling matters at MIRACL scale: 258M separate 2-character objects cost about
+    20 GB, while sharing one object per distinct bigram costs about 2 GB. Token
+    values are unchanged, so scores are unaffected.
+    """
+    pool: dict[str, str] = {}
     out = []
     for t in texts:
         s = _normalize(t)
-        out.append([s[i:i + 2] for i in range(len(s) - 1)] if len(s) > 1 else list(s))
+        if len(s) < 2:
+            out.append(list(s))
+            continue
+        row = []
+        append = row.append
+        for i in range(len(s) - 1):
+            bg = s[i:i + 2]
+            append(pool.setdefault(bg, bg))
+        out.append(row)
     return out
 
 

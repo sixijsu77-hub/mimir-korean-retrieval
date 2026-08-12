@@ -14,8 +14,10 @@ from huggingface_hub import hf_hub_download
 
 AUTORAG = ("yjoonjang/markers_bm", "fd7df84ac089bbec763b1c6bb1b56e985df5cc5c")
 KOSTRATEGY = ("taeminlee/Ko-StrategyQA", "d243889a3eb6654029dbd7e7f9319ae31d58f97c")
+MIRACL_CORPUS = "miracl/miracl-corpus"
+MIRACL_TOPICS = "miracl/miracl"
 
-DATASETS = ("AutoRAGRetrieval", "Ko-StrategyQA")
+DATASETS = ("AutoRAGRetrieval", "Ko-StrategyQA", "MIRACLRetrieval-ko")
 
 
 def _read_jsonl(path: str) -> list[dict]:
@@ -60,11 +62,42 @@ def _load_ko_strategyqa():
     return corpus, queries, qrels
 
 
+def _load_miracl_ko():
+    import csv
+    import gzip
+
+    corpus = {}
+    for i in range(3):
+        path = hf_hub_download(MIRACL_CORPUS, f"miracl-corpus-v1.0-ko/docs-{i}.jsonl.gz",
+                               repo_type="dataset")
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            for line in f:
+                d = json.loads(line)
+                corpus[d["docid"]] = {"title": d.get("title") or "", "text": d.get("text") or ""}
+
+    topics = hf_hub_download(MIRACL_TOPICS, "miracl-v1.0-ko/topics/topics.miracl-v1.0-ko-dev.tsv",
+                             repo_type="dataset")
+    with open(topics, encoding="utf-8") as f:
+        queries = {r[0]: r[1] for r in csv.reader(f, delimiter="\t") if len(r) > 1}
+
+    qrels_path = hf_hub_download(MIRACL_TOPICS, "miracl-v1.0-ko/qrels/qrels.miracl-v1.0-ko-dev.tsv",
+                                 repo_type="dataset")
+    # Every judged document is listed, relevant or not; only relevance 1 is a positive.
+    qrels: dict[str, dict[str, int]] = {}
+    with open(qrels_path, encoding="utf-8") as f:
+        for r in csv.reader(f, delimiter="\t"):
+            if len(r) > 3:
+                qrels.setdefault(r[0], {})[r[2]] = int(r[3])
+    return corpus, queries, qrels
+
+
 def load(name: str):
     if name == "AutoRAGRetrieval":
         return _load_autorag()
     if name == "Ko-StrategyQA":
         return _load_ko_strategyqa()
+    if name == "MIRACLRetrieval-ko":
+        return _load_miracl_ko()
     raise ValueError(f"unknown dataset: {name!r}; expected one of {DATASETS}")
 
 
