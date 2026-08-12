@@ -66,6 +66,8 @@ its own — a gate fixed in advance at ±0.02 nDCG@10.
 | KURE | `multilingual-e5-large` | Ko-StrategyQA | 0.80348 | **0.80348** |
 | KURE | `multilingual-e5-large` | MIRACL-ko | 0.66486 | **0.66486** |
 
+**Cross-checked in MTEB's own library.** `mteb` 2.18.16, installed separately, reproduces `AutoRAGRetrieval` at 0.65022 / 0.59527 / 0.99123 / 0.595269 for nDCG@10 / MAP@10 / Recall@100 / MRR@10 — the same values as the published file and as this harness, which computes all eight metrics independently. [`docs/results-exp07-mteb-crosscheck.md`](docs/results-exp07-mteb-crosscheck.md)
+
 **MIRACLReranking is the one that does not land.** Its +0.00599 sits inside the ±0.02
 gate but well outside the precision of the other six. Two causes were tested and neither
 accounts for it — tie-breaking moves the score across a 0.00595 band that still never
@@ -158,6 +160,7 @@ tuned value.
 | [`docs/results-exp04-morphology.md`](docs/results-exp04-morphology.md) | Character bigrams against Kiwi morphological analysis; H11 decided |
 | [`docs/results-exp05-corpus-size.md`](docs/results-exp05-corpus-size.md) | Corpus size swept over four orders of magnitude, both directions; H12 decided; BM25 against all 18 published dense models |
 | [`docs/results-exp06-sparse-side-and-length-norm.md`](docs/results-exp06-sparse-side-and-length-norm.md) | Does the weight conclusion depend on the sparse tokenizer, and does BM25's `b` cause hubness; H9–H10 decided |
+| [`docs/results-exp07-mteb-crosscheck.md`](docs/results-exp07-mteb-crosscheck.md) | A claim checked in MTEB's own library until it died, and the one that survived |
 | [`docs/should-you-tune-the-weight.md`](docs/should-you-tune-the-weight.md) | The practitioner procedure the above adds up to |
 | [`docs/preregistration-checklist.md`](docs/preregistration-checklist.md) | The five checks that would have caught three undecidable hypotheses here |
 | [`docs/errata.md`](docs/errata.md) | What was published wrong, for how long, and what changed |

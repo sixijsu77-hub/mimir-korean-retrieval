@@ -32,6 +32,42 @@ def recall_at_k(ranked_ids: list[str], relevant: dict[str, int], k: int) -> floa
     return len(positives & set(ranked_ids[:k])) / len(positives)
 
 
+def map_at_k(ranked_ids: list[str], relevant: dict[str, int], k: int) -> float:
+    """Average precision truncated at k, divided by the total relevant count.
+
+    This is `map_cut_k` as pytrec_eval defines it, which is what MTEB reports: the
+    denominator is every relevant document, not only those inside k.
+    """
+    total = sum(1 for g in relevant.values() if g > 0)
+    if not total:
+        return 0.0
+    hits = 0
+    ap = 0.0
+    for i, doc in enumerate(ranked_ids[:k], start=1):
+        if relevant.get(doc, 0) > 0:
+            hits += 1
+            ap += hits / i
+    return ap / total
+
+
+def mrr_at_k(ranked_ids: list[str], relevant: dict[str, int], k: int) -> float:
+    """Reciprocal rank of the first relevant document within k, else 0."""
+    for i, doc in enumerate(ranked_ids[:k], start=1):
+        if relevant.get(doc, 0) > 0:
+            return 1.0 / i
+    return 0.0
+
+
+def hit_rate_at_k(ranked_ids: list[str], relevant: dict[str, int], k: int) -> float:
+    """1 if any relevant document is inside k, else 0."""
+    return float(any(relevant.get(d, 0) > 0 for d in ranked_ids[:k]))
+
+
+def precision_at_k(ranked_ids: list[str], relevant: dict[str, int], k: int) -> float:
+    """Fraction of the top k that is relevant. Denominator is k, not the list length."""
+    return sum(1 for d in ranked_ids[:k] if relevant.get(d, 0) > 0) / k
+
+
 def evaluate(
     run: dict[str, list[str]],
     qrels: dict[str, dict[str, int]],
@@ -46,7 +82,9 @@ def evaluate(
     for qid, relevant in qrels.items():
         ranked = run.get(qid, [])
         scores = {f"ndcg_at_{k}": ndcg_at_k(ranked, relevant, k) for k in ks}
-        scores.update({f"recall_at_{k}": recall_at_k(ranked, relevant, k) for k in ks})
+        for name, fn in (("recall", recall_at_k), ("map", map_at_k), ("mrr", mrr_at_k),
+                         ("hit_rate", hit_rate_at_k), ("precision", precision_at_k)):
+            scores.update({f"{name}_at_{k}": fn(ranked, relevant, k) for k in ks})
         per_query[qid] = scores
 
     names = next(iter(per_query.values())).keys() if per_query else []
