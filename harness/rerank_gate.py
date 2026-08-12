@@ -76,9 +76,19 @@ def main() -> int:
         if kwargs.pop("stemmer", None):
             import Stemmer
             kwargs["stemmer"] = Stemmer.Stemmer("english")
-        scores = retrieval.bm25_score_matrix(
-            tokenizers.tokenize(tok, doc_texts, **kwargs),
-            tokenizers.tokenize(tok, query_texts, **kwargs))
+        corpus_tok = tokenizers.tokenize(tok, doc_texts, **kwargs)
+        query_tok = tokenizers.tokenize(tok, query_texts, **kwargs)
+        scores = retrieval.bm25_score_matrix(corpus_tok, query_tok)
+        # Indexing once over the whole candidate pool is one reading of what MTEB does;
+        # indexing each query's own candidates is the other, and it changes IDF and
+        # average document length. Both are recorded because the residual is unexplained.
+        pq_run = {}
+        for qi, q in enumerate(query_ids):
+            cand = list(candidates[q])
+            s = retrieval.bm25_score_matrix(
+                [corpus_tok[index_of[d]] for d in cand], [query_tok[qi]])[0]
+            pq_run[q] = [cand[j] for j in np.argsort(-s)]
+        per_query_index_ndcg = metrics.evaluate(pq_run, qrels)[0]["ndcg_at_10"]
         # Ties are broken by candidate order. Where many candidates score zero that
         # order decides the top 10, so the sensitivity is measured rather than assumed.
         order_scores = []
@@ -106,6 +116,8 @@ def main() -> int:
             "published_ndcg_at_10": PUBLISHED,
             "difference": round(diff, 5),
             "gate_passed": bool(abs(diff) <= TOLERANCE),
+            "per_query_index_ndcg_at_10": round(per_query_index_ndcg, 5),
+            "per_query_index_difference": round(per_query_index_ndcg - PUBLISHED, 5),
             "candidate_order_variants": order_scores,
             "order_spread": round(max(order_scores) - min(order_scores), 5),
             "zero_score_fraction": round(float(np.mean([
@@ -115,6 +127,8 @@ def main() -> int:
         r = rows[-1]
         p(f"  {tok:13s} sw={str(kw.get('stopwords')):5s} nDCG@10={r['ndcg_at_10']:.5f} "
           f"diff={diff:+.5f} {'PASS' if r['gate_passed'] else 'FAIL'}  "
+          f"per-query-index={r['per_query_index_ndcg_at_10']:.5f} "
+          f"({r['per_query_index_difference']:+.5f})  "
           f"zero-score {r['zero_score_fraction']*100:4.1f}%  "
           f"order spread {r['order_spread']:.5f} "
           f"({min(order_scores):.5f}-{max(order_scores):.5f})")

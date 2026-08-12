@@ -35,7 +35,7 @@ not generalize. That result is the point of the repository, not an embarrassment
 it — see [`PREREGISTRATION.md`](PREREGISTRATION.md), whose commits predate every
 number here, and [`docs/results-week3.md`](docs/results-week3.md).
 
-## Five published numbers reproduced
+## Seven published numbers reproduced, five of them exactly
 
 The harness was validated against other people's results before it reported any of
 its own — a gate fixed in advance at ±0.02 nDCG@10.
@@ -43,34 +43,58 @@ its own — a gate fixed in advance at ±0.02 nDCG@10.
 | Source | Model | Dataset | Published | Measured |
 |---|---|---|---|---|
 | MTEB | `baseline-bm25s` | AutoRAGRetrieval | 0.65022 | **0.65022** |
+| MTEB | `baseline-bm25s` | MIRACLRetrieval ko | 0.24521 | **0.24521** |
 | MTEB | `baseline-bm25s` | Ko-StrategyQA | 0.37808 | 0.37807 |
+| MTEB | `baseline-bm25s` | MIRACLReranking ko | 0.3338 | 0.33979 |
 | KURE | `multilingual-e5-large` | AutoRAGRetrieval | 0.81337 | **0.81337** |
 | KURE | `multilingual-e5-large` | Ko-StrategyQA | 0.80348 | **0.80348** |
 | KURE | `multilingual-e5-large` | MIRACL-ko | 0.66486 | **0.66486** |
 
-The three exact matches are addressed against the pre-registered "treat 0.000 as
-suspicious" rule in [`docs/results-week2.md`](docs/results-week2.md).
+**MIRACLReranking is the one that does not land.** Its +0.00599 sits inside the ±0.02
+gate but well outside the precision of the other six. Two causes were tested and neither
+accounts for it — tie-breaking moves the score across a 0.00595 band that still never
+reaches the published value, and indexing BM25 per query instead of over the whole
+candidate pool overshoots to −0.00460. **Cause not established** — see
+[`docs/results-exp03-reranking.md`](docs/results-exp03-reranking.md).
 
-## The published Korean BM25 baselines understate BM25
+The five exact matches are addressed against the pre-registered "treat 0.000 as
+suspicious" rule — the dense ones in [`docs/results-week2.md`](docs/results-week2.md),
+the BM25 one in [`docs/results-week1.md`](docs/results-week1.md), where it holds only
+after replicating a step MTEB applies and no published result file records: removing
+tokens present in ≥ 90% of documents, which it does for every language with no named
+stopword list. Without that step the same harness gives 0.64342.
 
-Both published BM25 numbers are reproduced above — and both turn out to be limited by
-tokenization rather than by BM25. Switching to character bigrams, with no parameter
-tuning:
+## The Korean BM25 baseline is configured for English
 
-| Dataset | Published baseline | Character bigram | Gain |
+The published Korean BM25 numbers come from three different configurations, and two of
+them apply **English stopwords and an English Snowball stemmer to Korean**:
+
+| Task | Published | Configuration that reproduces it | mteb version recorded |
 |---|---|---|---|
-| AutoRAGRetrieval | 0.65022 | **0.92345** | +0.273 |
-| Ko-StrategyQA | 0.37808 | **0.56108** | +0.183 |
-| MIRACL-ko | 0.24521 | **0.35067** | +0.105 |
+| MIRACLRetrieval ko | 0.24521 | word split, English stopwords, English stemmer | 2.12.7 |
+| Ko-StrategyQA | 0.37808 | word split, English stopwords, English stemmer | 2.10.8 |
+| AutoRAGRetrieval | 0.65022 | character unigram + frequency stopwords | 2.12.30 |
 
-95% bootstrap intervals do not overlap on any dataset. A further finding fell
-out of the gate: **the two published numbers were produced with different
-tokenizers**, which is not stated on any leaderboard and which this repository's
-own pre-measurement notes got wrong.
+Character unigrams did not exist in that codebase until 2.18.8, and Korean was not routed
+to them until 2.18.12 — so the third row's recorded version cannot have produced its own
+score. That is the substance of the report filed upstream.
 
-So a Korean leaderboard reporting "BM25" as a baseline may be reporting a
-tokenization artifact. Any margin a dense model claims over it should be read
-with that in mind.
+Against a tokenizer chosen for Korean rather than inherited from English, the same BM25 —
+no parameter tuned — scores far higher:
+
+| Dataset | Published baseline | Character bigram | Kiwi morphemes | Best gain |
+|---|---|---|---|---|
+| AutoRAGRetrieval | 0.65022 | **0.92345** | 0.89922 | +0.273 |
+| Ko-StrategyQA | 0.37808 | **0.56108** | 0.57291 | +0.195 |
+| MIRACL-ko | 0.24521 | 0.35067 | **0.40401** | +0.159 |
+
+95% bootstrap intervals do not overlap on any dataset. **Which of the two better
+tokenizers wins depends on the corpus** — see
+[`docs/results-exp04-morphology.md`](docs/results-exp04-morphology.md); this repository
+does not recommend one over the other.
+
+So a Korean leaderboard reporting "BM25" as a baseline is reporting a configuration
+artifact. Any margin a dense model claims over it should be read with that in mind.
 
 Reported upstream: [embeddings-benchmark/mteb#5157](https://github.com/embeddings-benchmark/mteb/issues/5157).
 
@@ -97,6 +121,8 @@ tuned value.
 | [`docs/results-week4.md`](docs/results-week4.md) | How many queries a weight needs; H6 decided |
 | [`docs/results-exp02-chunking.md`](docs/results-exp02-chunking.md) | Chunking as a manipulation of the truncation story; H7 decided |
 | [`docs/results-exp03-reranking.md`](docs/results-exp03-reranking.md) | Reranking, and how a weak reranker destroys a good ranking; H8 decided |
+| [`docs/results-exp04-morphology.md`](docs/results-exp04-morphology.md) | Character bigrams against Kiwi morphological analysis; H11 decided |
+| [`docs/results-exp05-corpus-size.md`](docs/results-exp05-corpus-size.md) | Corpus size swept over four orders of magnitude, both directions; H12 decided |
 | [`docs/should-you-tune-the-weight.md`](docs/should-you-tune-the-weight.md) | The practitioner procedure the above adds up to |
 | [`docs/errata.md`](docs/errata.md) | What was published wrong, for how long, and what changed |
 

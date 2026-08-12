@@ -48,6 +48,27 @@ Every one of those word-level orderings is within 0.02 of the published value, s
 (0.33384). The character tokenizers do not move at all, because they leave almost nothing
 tied.
 
+### The +0.00599 is still not accounted for
+
+Six other published numbers reproduce to five decimals; this one does not, so tie-breaking
+sensitivity explains the *spread* but not why the whole range sits above 0.33380 — even
+its lowest ordering is 0.00004 high. Two candidates were tested:
+
+| How BM25 is indexed | nDCG@10 | vs published |
+|---|---|---|
+| once over the whole candidate pool | 0.33979 | +0.00599 |
+| per query, over that query's candidates only | 0.32920 | −0.00460 |
+
+Per-query indexing changes IDF and average document length, so it was the plausible
+candidate. It overshoots in the other direction. **Cause not established.** Not checked:
+whether the reranking evaluator scores queries whose candidate list omits every relevant
+document, and whether the candidate order shipped in the dataset differs from the order
+MTEB iterates.
+
+The same run on the character tokenizers shows the per-query index is not a small
+perturbation: character unigrams fall from 0.37152 to 0.25765 and character bigrams from
+0.46550 to 0.34510, because a 100-document index gives almost every term the same IDF.
+
 ## H8 — supported in five of six conditions
 
 The prediction: after reranking the top 100 from each of three retrievers — BM25 with

@@ -53,6 +53,30 @@ python scripts/check_reported_numbers.py
 
 ---
 
+## 2026-08-12 — an unsupported claim about how AutoRAGRetrieval was built
+
+`PREREGISTRATION.md` said, as part of the caveat weakening H1, that AutoRAGRetrieval's
+"questions were generated against the documents". **That was never checked.** The
+dataset's HuggingFace card contains no construction notes, and no source stating it was
+ever read. It was an assumption about why lexical matching does well there, written as a
+fact, and it did work in the argument — it was one of the two reasons given for
+discounting H1.
+
+It is also not supported by measurement. Query-to-relevant-document character-bigram
+coverage, above a random-document null, is +0.420 on AutoRAGRetrieval and **+0.443 on
+MIRACL-ko** — highest on the dataset where BM25 does *worst*.
+
+Withdrawn in place, with the measurement recorded in
+[`results-exp05-corpus-size.md`](results-exp05-corpus-size.md).
+
+**This is the second unsupported provenance claim on this page.** The first concerned the
+private corpus. Both were inferences about how a dataset was made, stated as facts,
+supporting a conclusion. The check that applies: if a sentence describes how a corpus was
+constructed and no cited source or measurement in this repository establishes it, it does
+not go in.
+
+---
+
 ## 2026-08-12 — an unsupported claim about the private corpus
 
 `docs/results-week3.md` said the private measurement "was made on long internal
