@@ -96,7 +96,10 @@ leaderboard numbers.
 - **Overlapping intervals are reported as overlapping.** Rankings are not claimed
   from point estimates.
 - **Raw logs are committed.** Every table and figure can be regenerated from
-  `results/*.jsonl`.
+  `results/*.jsonl`, and `scripts/check_reported_numbers.py` fails if any score
+  quoted in the documentation appears in no raw record.
+- **Mistakes are listed, not quietly fixed.** [`docs/errata.md`](docs/errata.md)
+  records what was published wrong, for how long, and what changed as a result.
 
 ## Metrics
 
