@@ -53,6 +53,32 @@ python scripts/check_reported_numbers.py
 
 ---
 
+## 2026-08-12 — a "first appears at X" asserted from two sample points, twice
+
+Two claims of the form *"feature F first appears at version X"* were written after reading
+only X and one earlier version, with nothing in between checked.
+
+| Claim | Checked at the time | Actually |
+|---|---|---|
+| character tokenization for Korean first exists at 2.18.12 | 2.18.8 and 2.18.12 | correct — 2.18.9, 2.18.10 and 2.18.11 were read afterwards and none has it |
+| `kor-Hang` first appears in the declared language list at 2.18.12 | 2.12.30 and 2.18.12 | **wrong** — present from **2.14.9** |
+
+The first happened to be right, which is why it is on this page: the procedure was
+identical in both cases and produced one true statement and one false one. A claim that is
+correct by luck was not verified.
+
+The false one reached the upstream issue and has been removed rather than corrected — it
+sat in a side paragraph about declared metadata that was already scoped down as weak
+evidence, so cutting it shortens the report and removes an error at the same time. The
+argument it decorated is unaffected: the three pre-2.18.12 Korean numbers reproduce exactly
+under English stopwords and the English Snowball stemmer, which is a measurement, not a
+metadata reading.
+
+**The check that applies:** a boundary claim needs the version *before* the boundary read,
+not inferred. If X−1 was not opened, the sentence says "present at X", not "first at X".
+
+---
+
 ## 2026-08-12 — blamed one model for what turned out to be the dataset
 
 [`results-exp05-corpus-size.md`](results-exp05-corpus-size.md) concluded that the question
