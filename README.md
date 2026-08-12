@@ -71,6 +71,8 @@ So a Korean leaderboard reporting "BM25" as a baseline may be reporting a
 tokenization artifact. Any margin a dense model claims over it should be read
 with that in mind.
 
+Reported upstream: [embeddings-benchmark/mteb#5157](https://github.com/embeddings-benchmark/mteb/issues/5157).
+
 Measurements, caveats and reproduction commands: [`docs/results-week1.md`](docs/results-week1.md).
 
 ## Why this exists

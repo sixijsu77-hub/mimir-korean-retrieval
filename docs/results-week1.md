@@ -50,6 +50,10 @@ Following the pre-registered order of suspicion (tokenizer first), the full grid
 **The two published numbers were produced with different tokenizers.** Ko-StrategyQA's
 came from the word-level tokenizer; AutoRAGRetrieval's came from character unigrams.
 
+This was reported to the MTEB project as
+[embeddings-benchmark/mteb#5157](https://github.com/embeddings-benchmark/mteb/issues/5157),
+with the reproduction commands below.
+
 This matches how MTEB's Korean handling changed over time, traced through the source in
 `docs/baselines.md`: versions up to 2.18.0 had no Korean entry in the tokenizer language
 table and fell through to the word-level default, while 2.18.16 maps `kor` to character
