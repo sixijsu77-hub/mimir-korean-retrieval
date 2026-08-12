@@ -14,8 +14,8 @@ from huggingface_hub import hf_hub_download
 
 AUTORAG = ("yjoonjang/markers_bm", "fd7df84ac089bbec763b1c6bb1b56e985df5cc5c")
 KOSTRATEGY = ("taeminlee/Ko-StrategyQA", "d243889a3eb6654029dbd7e7f9319ae31d58f97c")
-MIRACL_CORPUS = "miracl/miracl-corpus"
-MIRACL_TOPICS = "miracl/miracl"
+MIRACL_CORPUS = ("miracl/miracl-corpus", "d921ec7e349ce0d28daf30b2da9da5ee698bef0d")
+MIRACL_TOPICS = ("miracl/miracl", "5be20db9509754dadad47689368639fcec739c00")
 
 DATASETS = ("AutoRAGRetrieval", "Ko-StrategyQA", "MIRACLRetrieval-ko")
 
@@ -68,20 +68,22 @@ def _load_miracl_ko():
 
     corpus = {}
     for i in range(3):
-        path = hf_hub_download(MIRACL_CORPUS, f"miracl-corpus-v1.0-ko/docs-{i}.jsonl.gz",
-                               repo_type="dataset")
+        path = hf_hub_download(MIRACL_CORPUS[0], f"miracl-corpus-v1.0-ko/docs-{i}.jsonl.gz",
+                               repo_type="dataset", revision=MIRACL_CORPUS[1])
         with gzip.open(path, "rt", encoding="utf-8") as f:
             for line in f:
                 d = json.loads(line)
                 corpus[d["docid"]] = {"title": d.get("title") or "", "text": d.get("text") or ""}
 
-    topics = hf_hub_download(MIRACL_TOPICS, "miracl-v1.0-ko/topics/topics.miracl-v1.0-ko-dev.tsv",
-                             repo_type="dataset")
+    topics = hf_hub_download(MIRACL_TOPICS[0],
+                             "miracl-v1.0-ko/topics/topics.miracl-v1.0-ko-dev.tsv",
+                             repo_type="dataset", revision=MIRACL_TOPICS[1])
     with open(topics, encoding="utf-8") as f:
         queries = {r[0]: r[1] for r in csv.reader(f, delimiter="\t") if len(r) > 1}
 
-    qrels_path = hf_hub_download(MIRACL_TOPICS, "miracl-v1.0-ko/qrels/qrels.miracl-v1.0-ko-dev.tsv",
-                                 repo_type="dataset")
+    qrels_path = hf_hub_download(MIRACL_TOPICS[0],
+                                 "miracl-v1.0-ko/qrels/qrels.miracl-v1.0-ko-dev.tsv",
+                                 repo_type="dataset", revision=MIRACL_TOPICS[1])
     # Every judged document is listed, relevant or not; only relevance 1 is a positive.
     qrels: dict[str, dict[str, int]] = {}
     with open(qrels_path, encoding="utf-8") as f:

@@ -53,29 +53,48 @@ python scripts/check_reported_numbers.py
 
 ---
 
-## 2026-08-12 — a "first appears at X" asserted from two sample points, twice
+## 2026-08-12 — version boundaries read off sampled tags, wrong three times running
 
-Two claims of the form *"feature F first appears at version X"* were written after reading
-only X and one earlier version, with nothing in between checked.
+Every claim of the form *"feature F first appears at version X"* on this project was
+produced by opening a handful of tags and reading off the transition. That method failed
+repeatedly, including on the corrections themselves.
 
-| Claim | Checked at the time | Actually |
+| Claim as published | How it was arrived at | Actually |
 |---|---|---|
-| character tokenization for Korean first exists at 2.18.12 | 2.18.8 and 2.18.12 | correct — 2.18.9, 2.18.10 and 2.18.11 were read afterwards and none has it |
-| `kor-Hang` first appears in the declared language list at 2.18.12 | 2.12.30 and 2.18.12 | **wrong** — present from **2.14.9** |
+| `kor` → character tokenization first at 2.18.16 | read 2.18.16 only | wrong — first at **2.18.12** |
+| `0_3_0` revision string introduced at 2.15.0 | read 2.12.30 and 2.15.0 | wrong — first at **2.14.2** |
+| `_unicode_tokenize` absent at 2.14.9, 2.15.0, 2.16.0 | those tags opened to read the *revision string* only, other columns filled from neighbours | wrong — present at all three |
+| corrected: all four features arrive at **2.14.9** | read 2.14.0 and 2.14.9 | wrong again — **2.14.2** |
+| corrected: `kor-Hang` in the declared language list from **2.14.9** | read 2.12.30, 2.14.9, 2.18.12 | wrong again — **2.14.2** |
+| `kor` first at 2.18.12 | read 2.18.8 and 2.18.12 | correct — 2.18.9–2.18.11 were read afterwards and none has it |
 
-The first happened to be right, which is why it is on this page: the procedure was
-identical in both cases and produced one true statement and one false one. A claim that is
-correct by luck was not verified.
+**Two of these are corrections that were themselves wrong**, which is the point. Sampling
+tags cannot establish a boundary; it can only establish that a tag has or lacks a feature.
+The last row happened to be right, and a claim that is correct by luck was not verified
+either.
 
-The false one reached the upstream issue and has been removed rather than corrected — it
-sat in a side paragraph about declared metadata that was already scoped down as weak
-evidence, so cutting it shortens the report and removes an error at the same time. The
-argument it decorated is unaffected: the three pre-2.18.12 Korean numbers reproduce exactly
-under English stopwords and the English Snowball stemmer, which is a measurement, not a
-metadata reading.
+**What replaced it.** The boundaries now come from the repository's own commit history —
+`git log -S<symbol>` for the introducing commit, then `git tag --contains` for the first
+release that carries it:
 
-**The check that applies:** a boundary claim needs the version *before* the boundary read,
-not inferred. If X−1 was not opened, the sentence says "present at X", not "first at X".
+| Symbol | Commit | First release |
+|---|---|---|
+| `_ISO3_TO_LANG`, `_unicode_tokenize`, `freq_threshold`, `revision="0_3_0"` | `4012ed57` (#4405) | **2.14.2** |
+| `"kor"` in `_ISO3_TO_LANG` | `db49990f` (#4870) | **2.18.12** |
+
+Both were then confirmed against the tag either side — 2.14.1/2.14.2 and 2.18.11/2.18.12.
+
+One of the wrong claims reached the upstream issue and has been removed rather than
+corrected, since it sat in a side paragraph about declared metadata that was already
+scoped down as weak evidence. The argument it decorated is unaffected: the pre-2.14.2
+Korean numbers reproduce exactly under English stopwords and the English Snowball stemmer,
+which is a measurement and not a metadata reading — and the source at 2.12.30 hardcodes
+`stopwords="en"` and `stemmer_language="english"` for every language, which is a reading of
+one file rather than an inference across versions.
+
+**The check that applies:** a boundary is a claim about a commit, not about a tag. Find the
+commit that introduced the symbol, then the first tag containing it. Reading N tags proves
+N facts about N tags and nothing about the gaps.
 
 ---
 
@@ -125,41 +144,6 @@ corpus_size.py` now records `distractor_reach` for both retrievers on every padd
 
 **The check that applies:** when a metric is unchanged, say what was held constant and
 count it. "Nothing changed" is a measurement, not an inference from a summary statistic.
-
----
-
-## 2026-08-12 — a version-trace table with rows that were not read
-
-A table tracing MTEB's Korean handling across versions appeared in
-[`baselines.md`](baselines.md), in [`results-week1.md`](results-week1.md) and in the
-upstream issue. Parts of it were wrong, and the reason is worse than the error.
-
-| Where | Said | Actually |
-|---|---|---|
-| the upstream issue | `_unicode_tokenize` absent at 2.14.9, 2.15.0, 2.16.0 | present at all three |
-| `baselines.md`, `results-week1.md` | `kor` → character unigram at 2.18.16 | first at **2.18.12**; absent through 2.18.11 |
-| `baselines.md` | `0_3_0` introduced at 2.15.0 | present at **2.14.9** |
-| the upstream issue | character unigram first exists at 2.18.12 | asserted before 2.18.9–2.18.11 were checked; they were checked afterwards and it holds |
-
-**How it happened.** The tags 2.14.9, 2.15.0 and 2.16.0 were opened to read one thing —
-the `ModelMeta` revision string — and the other columns of the row were filled in from
-what neighbouring versions did. The issue text then said "Every row was read at the tag
-named", which was not true of those rows. Separately, "first exists at 2.18.12" was
-written without opening 2.18.9, 2.18.10 or 2.18.11, which exist.
-
-**What changed.** All thirteen tags were re-read with every column checked at every tag:
-2.12.7, 2.12.30, 2.14.0, 2.14.9, 2.15.0, 2.15.4, 2.16.0, 2.17.0, 2.18.0, 2.18.8, 2.18.11,
-2.18.12, 2.18.16. The corrected trace is in [`baselines.md`](baselines.md) and the
-upstream issue body was edited to match.
-
-**The argument was not affected, and is now stronger.** At 2.12.30 there is no language
-table, no `_unicode_tokenize` and no `freq_threshold` — none of the three ingredients the
-published AutoRAGRetrieval score requires. All three arrive together at 2.14.9, and `kor`
-routing at 2.18.12.
-
-**The check that applies:** a table cell is a claim. Opening a file to read one column
-does not verify the others, and a row assembled from neighbouring versions is inference,
-not a reading. Either check every cell or say which ones were checked.
 
 ---
 

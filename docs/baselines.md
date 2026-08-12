@@ -93,19 +93,22 @@ def _unicode_tokenize(text: str) -> list[str]:
 
 Tracing when this appeared:
 
-Read at tags 2.12.7, 2.12.30, 2.14.0, 2.14.9, 2.15.0, 2.15.4, 2.16.0, 2.17.0, 2.18.0,
-2.18.8, 2.18.11, 2.18.12 and 2.18.16 — every column below checked at every tag named,
-not inferred from neighbours.
+Boundaries taken from the commit history of that file, not from sampled tags: `git log -S`
+for each symbol, then the first release tag containing that commit.
 
 | mteb version | revision | `_ISO3_TO_LANG` | `_unicode_tokenize` | `freq_threshold` | `kor` | Korean handling |
 |---|---|---|---|---|---|---|
-| 2.10.8 – 2.14.0 | `0_1_10` | absent | absent | absent | — | English stopwords + English stemmer, word-level split |
-| 2.14.9 – 2.18.11 | `0_3_0` | present | present | 0.9 | no | word-level split, frequency stopwords |
+| 2.10.8 – 2.14.1 | `0_1_10` | absent | absent | absent | — | English stopwords + English stemmer, word-level split |
+| 2.14.2 – 2.18.11 | `0_3_0` | present | present | 0.9 | no | word-level split, frequency stopwords |
 | 2.18.12 – 2.18.16 | `0_3_0` | present | present | 0.9 | `(None, None, "char")` | character unigram, frequency stopwords |
 
-Four things changed at once at **2.14.9**: the revision string, the language table,
-`_unicode_tokenize` and `freq_threshold`. Korean routing to characters came later, at
-**2.18.12** — `kor` is absent through 2.18.11.
+All four arrived in one commit — `4012ed57`, "model: add language support to BM25 and add
+the subword BM25" (#4405) — first released in **2.14.2**: the revision string, the language
+table, `_unicode_tokenize` and `freq_threshold`. Korean routing to characters came later,
+in `db49990f` (#4870), first released in **2.18.12**.
+
+Before 2.14.2 the model hardcoded `stopwords="en"` and `stemmer_language="english"` for
+every language; at 2.14.2 both defaults become `None` and are looked up per language.
 
 So **re-running `mteb/baseline-bm25s` on Korean with a current MTEB would not
 reproduce 0.65022** — it would tokenize differently. Anyone comparing against
@@ -113,11 +116,11 @@ these published numbers has to pin the version, not just the dataset.
 
 One loose end is recorded rather than guessed: the AutoRAGRetrieval result file
 sits in the `0_3_0` folder but records `mteb_version: 2.12.30`, and `0_3_0` was
-not introduced until 2.14.9. The folder name tracks the bm25s *library* version
+not introduced until 2.14.2. The folder name tracks the bm25s *library* version
 (0.1.10 → 2024-07-10, 0.3.0 → 2026-05-06), not the MTEB version, so the two are
 not required to agree; the file's own commit message mentions a rebase. **Which
 of the two code paths produced 0.65022 is not confirmed.** It matters little in
-practice — neither 2.12.30 nor 2.14.9 gives Korean a character tokenizer, and
+practice — neither 2.12.30 nor 2.14.2 gives Korean a character tokenizer, and
 they differ only by an English stopword list and an English stemmer, both of
 which should be near-inert on Hangul. That "should" is a prediction, and it is
 cheap to settle: run both configurations and see which lands on 0.65022. That is

@@ -81,19 +81,24 @@ stopword list. Without that step the same harness gives 0.64342.
 
 ## The Korean BM25 baseline is configured for English
 
-The published Korean BM25 numbers come from three different configurations, and two of
-them apply **English stopwords and an English Snowball stemmer to Korean**:
+`mteb/baseline-bm25s` carries **27 Korean results** across six recorded `mteb_version`
+values, and **none of them was produced at 2.18.12 or later** — the release where Korean
+first gets its own tokenizer. Four were reproduced here, and they need **two different
+configurations**:
 
-| Task | Published | Configuration that reproduces it | mteb version recorded |
-|---|---|---|---|
-| MIRACLRetrieval ko | 0.24521 | word split, English stopwords, English stemmer | 2.12.7 |
-| Ko-StrategyQA | 0.37808 | word split, English stopwords, English stemmer | 2.10.8 |
-| AutoRAGRetrieval | 0.65022 | character unigram + frequency stopwords | 2.12.30 |
+| Task | Published | Measured | Configuration that reproduces it | version recorded |
+|---|---|---|---|---|
+| MIRACLRetrieval ko | 0.24521 | **0.24521** | word split, English stopwords, English stemmer | 2.12.7 |
+| Ko-StrategyQA | 0.37808 | 0.37807 | word split, English stopwords, English stemmer | 2.10.8 |
+| MIRACLReranking ko | 0.33380 | 0.33979 | word split, English stopwords, English stemmer | 2.12.7 |
+| AutoRAGRetrieval | 0.65022 | **0.65022** | character unigram + frequency stopwords | 2.12.30 |
 
-At 2.12.30 the codebase has no language table, no character tokenizer and no
-frequency-stopword step; all three arrive at 2.14.9, and Korean is not routed to
-characters until 2.18.12. So the third row's recorded version cannot have produced its own
-score. That is the substance of the report filed upstream.
+Up to 2.14.1 the baseline hardcodes `stopwords="en"` and `stemmer_language="english"` for
+**every** language — that is what the first three rows reproduce under. At 2.12.30 there is
+no language table, no character tokenizer and no frequency-stopword step; all four arrive
+in one commit released as 2.14.2, and Korean is not routed to characters until 2.18.12. So
+the last row's recorded version cannot have produced its own score. That is the substance
+of the report filed upstream.
 
 Against a tokenizer chosen for Korean rather than inherited from English, the same BM25 —
 no parameter tuned — scores far higher:

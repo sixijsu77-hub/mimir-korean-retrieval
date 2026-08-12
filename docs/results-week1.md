@@ -19,7 +19,7 @@ suspicious" check fires. It is addressed rather than waved past: the match appea
 after replicating a step MTEB applies and no result file records — removing tokens present
 in ≥ 90% of documents, which it does for any language with no named stopword list. Without
 that step the same harness gives 0.64342. Seven characters are removed here (newline,
-space, `.`, `1`, `2`, `가`, `기`, `이`), and adding them back reopens the gap. That is a
+`.`, `1`, `2`, `가`, `기`, `이`), and adding them back reopens the gap. That is a
 configuration match, not a shared code path: the metrics, the data loading and the ranking
 assembly are written from scratch, and only the BM25 scoring engine (`bm25s`) is
 deliberately shared with MTEB so that a mismatch would point at this harness rather than
@@ -68,7 +68,7 @@ is first mapped to character unigrams. Ko-StrategyQA's result file records
 records `2.12.30`, which is *also* in the word-level era, and that is **not** consistent
 with its measured tokenizer. At 2.12.30 none of the three ingredients its score needs
 exists: no language table, no `_unicode_tokenize`, no `freq_threshold`. Its result sits in
-the `0_3_0` folder, a revision string that did not exist before MTEB 2.14.9, so the
+the `0_3_0` folder, a revision string that did not exist before MTEB 2.14.2, so the
 recorded `mteb_version` field appears stale and the run was almost certainly made with a
 later version.
 
@@ -108,7 +108,7 @@ residual exactly:
 | character unigram, freq-stopwords at 0.9 | **0.65022** | **0.00000** |
 
 Seven characters are dropped from the 720-document corpus and from the queries: newline,
-space, `.`, `1`, `2`, `가`, `기`, `이`.
+`.`, `1`, `2`, `가`, `기`, `이`.
 
 The `bm25s` version candidate was checked separately and ruled out — installing 0.3.0, the
 version the result folder names, and re-running the word-level configuration gives 0.79557,
@@ -119,7 +119,7 @@ is fully accounted for without them.
 English discards a function word. Removing a frequent *character* in Korean discards that
 syllable from every word containing it — `이`, `가` and `기` are particles but also
 syllables inside ordinary content words. On Ko-StrategyQA nine characters go
-(`\n`, space, `.`, `는`, `니`, `다`, `로`, `에`, `의`, `이`) and the score falls from
+(`\n`, `.`, `는`, `니`, `다`, `로`, `에`, `의`, `이`) and the score falls from
 0.30430 to 0.30136.
 
 ## Published Korean BM25 baselines understate BM25

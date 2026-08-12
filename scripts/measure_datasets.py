@@ -24,9 +24,10 @@ from huggingface_hub import hf_hub_download
 # Dataset revisions pinned to the ones MTEB evaluates.
 AUTORAG = ("yjoonjang/markers_bm", "fd7df84ac089bbec763b1c6bb1b56e985df5cc5c")
 KOSTRATEGY = ("taeminlee/Ko-StrategyQA", "d243889a3eb6654029dbd7e7f9319ae31d58f97c")
-# MTEB serves MIRACL from its own mirror; these are the upstream sources.
-MIRACL_CORPUS = "miracl/miracl-corpus"
-MIRACL_TOPICS = "miracl/miracl"
+# MTEB serves MIRACL from its own mirror; these are the upstream sources, pinned so the
+# inventory reproduces.
+MIRACL_CORPUS = ("miracl/miracl-corpus", "d921ec7e349ce0d28daf30b2da9da5ee698bef0d")
+MIRACL_TOPICS = ("miracl/miracl", "5be20db9509754dadad47689368639fcec739c00")
 
 
 def length_stats(values: list[int]) -> dict:
@@ -152,7 +153,8 @@ def measure_ko_strategyqa() -> dict:
 
 def measure_miracl_ko() -> dict:
     shards = [
-        fetch(MIRACL_CORPUS, f"miracl-corpus-v1.0-ko/docs-{i}.jsonl.gz") for i in range(3)
+        fetch(MIRACL_CORPUS[0], f"miracl-corpus-v1.0-ko/docs-{i}.jsonl.gz",
+              revision=MIRACL_CORPUS[1]) for i in range(3)
     ]
     text_lens, index_lens, stats_lens = [], [], []
     seen = set()
@@ -168,8 +170,10 @@ def measure_miracl_ko() -> dict:
                 stats_lens.append(len((title + " " + text).strip()))
                 seen.add(text)
 
-    topics = fetch(MIRACL_TOPICS, "miracl-v1.0-ko/topics/topics.miracl-v1.0-ko-dev.tsv")
-    qrels_path = fetch(MIRACL_TOPICS, "miracl-v1.0-ko/qrels/qrels.miracl-v1.0-ko-dev.tsv")
+    topics = fetch(MIRACL_TOPICS[0], "miracl-v1.0-ko/topics/topics.miracl-v1.0-ko-dev.tsv",
+                   revision=MIRACL_TOPICS[1])
+    qrels_path = fetch(MIRACL_TOPICS[0], "miracl-v1.0-ko/qrels/qrels.miracl-v1.0-ko-dev.tsv",
+                       revision=MIRACL_TOPICS[1])
     topic_rows = list(csv.reader(open(topics, encoding="utf-8"), delimiter="\t"))
     qrel_rows = list(csv.reader(open(qrels_path, encoding="utf-8"), delimiter="\t"))
 
@@ -181,7 +185,7 @@ def measure_miracl_ko() -> dict:
     disk = sum(os.path.getsize(p) for p in shards) + os.path.getsize(topics) + os.path.getsize(qrels_path)
     return {
         "dataset": "MIRACLRetrieval-ko",
-        "hf_path": f"{MIRACL_CORPUS} + {MIRACL_TOPICS}",
+        "hf_path": f"{MIRACL_CORPUS[0]} + {MIRACL_TOPICS[0]}",
         "hf_revision": "not pinned (MTEB serves this via its mteb/MIRACLRetrieval mirror)",
         "eval_split": "dev",
         "n_documents": len(text_lens),
