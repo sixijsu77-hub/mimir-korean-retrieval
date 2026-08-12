@@ -17,9 +17,11 @@ docs/plans/
 *secret*
 
 # --- Agent / editor / OS -----------------------------------------------------
-CLAUDE.md
-CLAUDE.local.md
-prompt.txt
+# 이름을 바꿔도 걸리도록 넓게 잡는다 — themis_prompt.txt 가 이 패턴을 빠져나가
+# 공개 저장소에 추적 대상으로 잡힌 적이 있다 (2026-08-13)
+CLAUDE*.md
+*prompt*.txt
+*prompt*.md
 .claude/
 .vscode/
 .idea/
