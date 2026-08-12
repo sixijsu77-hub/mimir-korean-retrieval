@@ -16,8 +16,16 @@ numpy==2.2.6
 bm25s==0.3.10
 PyStemmer==3.1.0
 
-# --- Stage 3: dense retrieval (week 2) --------------------------------------
-# Not needed to reproduce any BM25 result in docs/results-week1.md — skip this
-# line if you only want the week-1 numbers. The PyPI Linux wheel bundles its own
+# --- Stage 3: Korean morphological analysis (exp04) -------------------------
+# Kiwi is the analyser behind the `morph` and `morph_content` tokenizers. Not
+# needed for any character- or word-level result.
+kiwipiepy==0.23.2
+kiwipiepy_model==0.23.0
+
+# --- Stage 4: dense retrieval (week 2) --------------------------------------
+# Not needed to reproduce any BM25 result in docs/results-week1.md — skip these
+# lines if you only want the week-1 numbers. The PyPI Linux wheel bundles its own
 # CUDA runtime, so no CUDA toolkit install is required.
 torch==2.13.0
+sentence-transformers==5.7.0
+transformers==5.15.0
