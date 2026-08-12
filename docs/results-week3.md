@@ -213,6 +213,9 @@ Across three public datasets:
 - **Hubness is real but is not a dense-specific pathology.** The sparse method has it
   worse on all three datasets.
 
-The private measurement that started this looks corpus-specific: it was made on long
-internal documents, which is the regime where these results agree with it, and it does not
-describe Korean retrieval in general.
+The private measurement that started this looks corpus-specific rather than general.
+What separates the three public datasets is document length relative to the encoders'
+512-token limit — that was predicted in advance and held. **Whether the private corpus
+falls in the long-document regime is not recorded, so why it disagreed with two of the
+three datasets is a hypothesis, not something measured here.** What is established is
+narrower: its weight finding does not describe Korean retrieval in general.

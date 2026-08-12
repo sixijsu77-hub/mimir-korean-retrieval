@@ -53,6 +53,21 @@ python scripts/check_reported_numbers.py
 
 ---
 
+## 2026-08-12 — an unsupported claim about the private corpus
+
+`docs/results-week3.md` said the private measurement "was made on long internal
+documents". Nothing in this repository records that corpus's document length; the
+only recorded facts are its 194 chunks and 12-item golden set. The sentence was an
+inference presented as a fact, and it did real work in the argument — it was the
+bridge from "these three public datasets differ by document length" to "so that is
+why the private result disagreed".
+
+Corrected in place. The mechanism that document length separates the three *public*
+datasets was pre-registered as H5 and held; the extension of it to the private corpus
+is now marked as a hypothesis rather than a finding.
+
+---
+
 ## 2026-08-12 — `docs/baselines.md` named the wrong tokenizer, before measuring
 
 Not an erratum in the strict sense — it was a prediction, made before any
