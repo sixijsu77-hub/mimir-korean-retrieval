@@ -240,6 +240,56 @@ about where a hybrid weight should sit — including the one this repository was
 to test. That would explain the original finding without rescuing it, and it is a
 result about evaluation design rather than about Korean retrieval.
 
+## 4d. exp02 chunking and exp03 reranking — registered before either was run
+
+Added 2026-08-12. Neither experiment had been run at the time of this commit. They are
+registered together because they are independent: fixing exp03's prediction before
+seeing exp02's result keeps the second from being shaped by the first.
+
+Weeks 2–4 left two claims resting on correlation rather than manipulation, and both are
+stated in the published results as unmeasured. These close them.
+
+### 4d.1 exp02 — chunking (H7)
+
+Documents on AutoRAGRetrieval exceed the encoders' 512-token limit 36.8% of the time,
+and that is the one dataset where dense loses and the weight curve is flat. If
+truncation is the cause, removing it should change the outcome. This manipulates the
+proposed cause instead of observing it.
+
+**Procedure.** Split each document into windows of at most **400 tokens with a 50-token
+overlap**, measured with the model's own tokenizer, so no chunk is truncated. A
+document's score is the **maximum** over its chunks. Everything else — models,
+normalization, sweep, metric, bootstrap — is unchanged from section 2b.
+
+| ID | Prediction | How it is falsified |
+|---|---|---|
+| H7 | On AutoRAGRetrieval, chunking raises dense-alone nDCG@10, with the paired bootstrap interval on the gain excluding 0 | The interval includes 0 |
+
+Also reported, not part of the H7 test: the gain on Ko-StrategyQA (1.5% over the limit)
+as a control, and whether AutoRAGRetrieval's amplitude ÷ interval-width ratio rises
+above the 1.90 measured without chunking.
+
+### 4d.2 exp03 — reranking (H8)
+
+**Gate first.** MTEB publishes a BM25 baseline for `MIRACLReranking` ko at nDCG@10
+**0.3338** (`mteb_version` 2.12.7). Reproduce it within 0.02 before reporting any
+reranked number. If the task's candidate-list format cannot be matched with this
+harness, that is reported as *not attempted* rather than worked around.
+
+**Rerankers.** `BAAI/bge-reranker-v2-m3` primary, `Alibaba-NLP/gte-multilingual-reranker-base`
+as contrast. Cross-encoder applied to the **top 100** from each retriever.
+
+**Retrievers compared.** Character-bigram BM25 alone, `multilingual-e5-large` alone, and
+the best hybrid weight — the same three the earlier weeks compared.
+
+| ID | Prediction | How it is falsified |
+|---|---|---|
+| H8 | Reranking compresses the differences between retrievers: the spread of nDCG@10 across the three, after reranking, is **less than half** the spread before | The spread shrinks by less than half |
+
+If H8 holds, the practical reading is that the weight-tuning question this repository
+spent four weeks on matters much less once a reranker is in the pipeline — which would
+be a result against this repository's own subject matter, and is published as such.
+
 ## 5. Stopping rules
 
 - Any dataset whose corpus cannot be indexed within available time/disk is **reported as
@@ -263,6 +313,11 @@ result, and the private measurement is reinterpreted as corpus-specific.
 Amendments are only legitimate before results exist. Each entry records what
 changed and why, so a reader can check the ordering against `git log` rather
 than taking it on trust.
+
+**2026-08-12 — exp02 (H7, chunking) and exp03 (H8, reranking) added.** Section 4d.
+Both close claims that earlier weeks left resting on correlation. Neither had been run
+at the time of this commit; registering them together keeps exp03's prediction from
+being shaped by exp02's outcome. Verdicts for H1–H6 are not touched.
 
 **2026-08-12 (week 4) — H6 added, before the measurement it governs.** Section 4c.
 Asks how many queries are needed before a hybrid weight optimum can be located at all.
